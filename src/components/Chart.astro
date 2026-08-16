@@ -1,0 +1,75 @@
+---
+/**
+ * Chart.astro — the site's map primitive.
+ *
+ * Renders a plate-carrée panel in chart units (x = lon + 180, y = 90 - lat) and
+ * hands the frame back through the slot so callers can place tracks and pins in
+ * the same coordinate system with no maths of their own.
+ */
+import { COAST_DETAIL } from '../data/generated/coast-detail.ts';
+import { COAST_MID } from '../data/generated/coast-mid.ts';
+import { COAST_SIMPLE } from '../data/generated/coast-simple.ts';
+import { WORLD, viewBox, aspect, graticule, equator, wrapOffsets, type Frame } from '../lib/chart.ts';
+
+interface Props {
+  frame?: Frame;
+  /**
+   * Coastline generalisation. "low" is 1:110m, right for a whole-world chart.
+   * "auto" matches the line to the scale: a plate framed tightly enough to
+   * resolve a fjord gets the full 1:50m line, and one that cannot does not pay
+   * for it.
+   */
+  detail?: 'low' | 'auto';
+  lonStep?: number;
+  latStep?: number;
+  label?: string;
+  class?: string;
+  /** Rendered above the map, e.g. a legend. */
+  id?: string;
+}
+
+const {
+  frame = WORLD,
+  detail = 'low',
+  lonStep = 30,
+  latStep = 20,
+  label = 'Chart of the world ocean',
+  class: cls = '',
+  id,
+} = Astro.props;
+
+const span = frame.lonTo - frame.lonFrom;
+const coast =
+  detail === 'low' ? COAST_SIMPLE : span < 40 ? COAST_DETAIL : span < 210 ? COAST_MID : COAST_SIMPLE;
+const offsets = wrapOffsets(frame);
+const grat = graticule(frame, lonStep, latStep);
+const eq = equator(frame);
+const vb = viewBox(frame);
+const ratio = aspect(frame);
+---
+
+<figure class={`chart ${cls}`} id={id} style={`--chart-aspect:${ratio}`}>
+  <svg viewBox={vb} preserveAspectRatio="xMidYMid meet" role="img" aria-label={label}>
+    <path class="chart__grat" d={grat} />
+    {eq && <path class="chart__grat chart__eq" d={eq} />}
+    {
+      offsets.map((dx) => (
+        <g transform={dx ? `translate(${dx} 0)` : undefined}>
+          <path class="chart__land" d={coast} fill-rule="evenodd" />
+        </g>
+      ))
+    }
+    <slot />
+  </svg>
+  <slot name="overlay" />
+</figure>
+
+<style>
+  .chart {
+    aspect-ratio: var(--chart-aspect);
+  }
+  .chart svg {
+    width: 100%;
+    height: 100%;
+  }
+</style>
