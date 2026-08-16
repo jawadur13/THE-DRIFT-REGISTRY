@@ -1,0 +1,861 @@
+---
+import Base from '../../layouts/Base.astro';
+import Chart from '../../components/Chart.astro';
+import { CASES } from '../../data/cases.ts';
+import { TRACKS, SOLVED_ON, RESIDUAL_WINDOW_DAYS } from '../../data/generated/tracks.ts';
+import { statusById, classById, fmtDate, fmtCoord } from '../../lib/registry.ts';
+import { cx, cy, caseFrame, contains, fmtLat, fmtLon } from '../../lib/chart.ts';
+import { GYRES } from '../../lib/ocean.ts';
+
+export function getStaticPaths() {
+  return CASES.map((c) => ({ params: { code: c.code }, props: { c } }));
+}
+
+const { c } = Astro.props;
+const t = TRACKS[c.code];
+const st = statusById(c.status);
+const cl = classById(c.class);
+const gyre = t.gyre ? GYRES.find((g) => g.id === t.gyre) : null;
+
+const idx = CASES.findIndex((x) => x.code === c.code);
+const prev = CASES[(idx - 1 + CASES.length) % CASES.length];
+const next = CASES[(idx + 1) % CASES.length];
+
+// Frame the chart around the modelled track, widening to take in the reported
+// finds where that does not reduce the drift itself to a smudge.
+const { frame, dropped } = caseFrame(
+  t.points.slice(0, t.nowIndex + 1),
+  c.sightings.map((s) => [s.lon, s.lat] as [number, number]),
+);
+const offChart = c.sightings.filter((s) => !contains(frame, s.lon, s.lat));
+
+const modelLabel: Record<string, string> = {
+  'in-transit': 'still at sea',
+  grounded: 'ashore',
+  dispersed: 'dispersed beyond tracking',
+};
+
+const yearsAdrift = (t.daysAdrift / 365.25).toFixed(1);
+
+/**
+ * Marker radii are given in chart units, so on a plate framed to a short drift
+ * the SVG scale-up would turn a 3-unit pin into a blot the size of Norway.
+ * Scaling every radius with the frame keeps pins the same size on screen
+ * whatever the zoom.
+ */
+const u = (frame.lonTo - frame.lonFrom) / 300;
+---
+
+<Base title={`${c.code} — ${c.name}`} description={c.subtitle} nav="registry">
+  <article class="file">
+    {/* --------------------------------------------------------- file head */}
+    <header class="wrap section" style="padding-bottom:var(--sp-5)">
+      <nav class="crumbs label" aria-label="Breadcrumb">
+        <a href="/registry">Registry</a>
+        <span aria-hidden="true">/</span>
+        <span class="code">{c.code}</span>
+      </nav>
+
+      <h1 class="file__h">{c.name}</h1>
+      <p class="lede file__sub">{c.subtitle}</p>
+
+      <div class="file__tags">
+        <span class={`pill pill--${st.token}`}>{st.label}</span>
+        <span class="dim">{st.gloss}</span>
+        <span class={`basis basis--${c.basis}`}>{c.basis}</span>
+      </div>
+    </header>
+
+    {/* ------------------------------------------------------------- chart */}
+    <section class="wrap-wide">
+      <div class="platewrap">
+        <Chart
+          frame={frame}
+          detail="auto"
+          lonStep={frame.lonTo - frame.lonFrom > 140 ? 30 : 10}
+          latStep={frame.latTo - frame.latFrom > 70 ? 20 : 10}
+          label={`Modelled drift of ${c.name} from ${c.release.place}`}
+          class="plate"
+        >
+          {t.ensemble.map((d) => <path class="chart__track chart__track--ghost" d={d} />)}
+          <path class="chart__track chart__track--future" d={t.pathAll} />
+          <path class="chart__track plate__rep" d={t.pathToNow} id="rep-path" />
+          <path class="chart__track plate__recent" d={t.pathRecent} id="rep-recent" />
+
+          {/* release */}
+          <g class="pin pin--release">
+            <circle cx={cx(t.release[0])} cy={cy(t.release[1])} r={2.4 * u} class="pin__ring" />
+            <circle cx={cx(t.release[0])} cy={cy(t.release[1])} r={0.8 * u} class="pin__dot" />
+            <title>{`Release — ${fmtDate(c.release.date)}`}</title>
+          </g>
+
+          {/* reported finds */}
+          {
+            c.sightings.map((s, i) =>
+              contains(frame, s.lon, s.lat) ? (
+                <g class="pin pin--find" data-find={i}>
+                  <path
+                    class="pin__cross"
+                    d={`M${cx(s.lon) - 1.8 * u} ${cy(s.lat)}h${3.6 * u}M${cx(s.lon)} ${cy(s.lat) - 1.8 * u}v${3.6 * u}`}
+                  />
+                  <circle cx={cx(s.lon)} cy={cy(s.lat)} r={1.5 * u} class="pin__hit" />
+                  <title>{`${fmtDate(s.date)} — ${s.place}`}</title>
+                </g>
+              ) : null,
+            )
+          }
+
+          {/* present modelled position, and the scrubbed marker */}
+          <g class="pin pin--now" id="now-pin">
+            <circle cx={cx(t.now[0])} cy={cy(t.now[1])} r={3.2 * u} class="pin__halo" />
+            <circle cx={cx(t.now[0])} cy={cy(t.now[1])} r={1.3 * u} class="pin__dot" />
+          </g>
+        </Chart>
+
+        {
+          dropped > 0 && (
+            <p class="offchart label">
+              {offChart.length} reported find{offChart.length === 1 ? '' : 's'} lie
+              {offChart.length === 1 ? 's' : ''} outside this plate —{' '}
+              {offChart.map((s) => s.place).join('; ')}. Listed in the log below.
+            </p>
+          )
+        }
+
+        <ul class="legend label" aria-hidden="true">
+          <li><i class="k k--now2"></i>Last five years of the drift</li>
+          <li><i class="k k--rep"></i>Representative solution</li>
+          <li><i class="k k--ens"></i>{t.ensemble.length} other members drawn</li>
+          <li><i class="k k--fut"></i>Forward projection</li>
+          <li><i class="k k--find"></i>Reported find</li>
+          <li><i class="k k--now"></i>Position today</li>
+        </ul>
+      </div>
+
+      {/* time scrubber */}
+      <div class="scrub">
+        <label class="label" for="scrub">Solution date</label>
+        <input
+          id="scrub"
+          type="range"
+          min="0"
+          max={t.nowIndex}
+          value={t.nowIndex}
+          step="1"
+          aria-describedby="scrub-out"
+        />
+        <output id="scrub-out" class="scrub__out num" for="scrub"></output>
+      </div>
+    </section>
+
+    {/* ----------------------------------------------------------- dissent */}
+    {
+      t.dissent && (
+        <section class="wrap">
+          <aside class="dissent" role="note">
+            <p class="label">Model dissent</p>
+            <p>
+              This file is carried as <strong>{st.label.toLowerCase()}</strong>. Run forward to
+              today, the ensemble says the object is{' '}
+              <strong>{modelLabel[t.modelStatus]}</strong> — {t.afloat} of {t.members} members are
+              still at sea. The filed status stands; the disagreement is recorded rather than
+              resolved.
+            </p>
+          </aside>
+        </section>
+      )
+    }
+
+    {/* -------------------------------------------------------------- body */}
+    <section class="wrap section file__body">
+      <div class="prose">
+        <p class="label" style="margin-bottom:var(--sp-3)">Summary</p>
+        {c.summary.map((p) => <p>{p}</p>)}
+      </div>
+
+      <aside class="facts">
+        <p class="label" style="margin-bottom:var(--sp-3)">Particulars</p>
+        <dl class="dl">
+          <div>
+            <dt>Class</dt>
+            <dd>{c.class} — {cl.label}</dd>
+          </div>
+          <div>
+            <dt>Released</dt>
+            <dd>{fmtDate(c.release.date)}</dd>
+          </div>
+          <div>
+            <dt>Position</dt>
+            <dd class="num">{fmtCoord(c.release.lat, c.release.lon)}</dd>
+          </div>
+          <div>
+            <dt>Place</dt>
+            <dd>{c.release.place}</dd>
+          </div>
+          {
+            c.release.vessel && (
+              <div>
+                <dt>Agent</dt>
+                <dd>{c.release.vessel}</dd>
+              </div>
+            )
+          }
+          <div>
+            <dt>Quantity</dt>
+            <dd>{c.quantity}</dd>
+          </div>
+          <div>
+            <dt>Materials</dt>
+            <dd>{c.materials.join(' · ')}</dd>
+          </div>
+          <div>
+            <dt>Basin</dt>
+            <dd>{c.ocean}</dd>
+          </div>
+          <div>
+            <dt>Windage</dt>
+            <dd>
+              <span class="num">{t.windage.toFixed(2)}</span> — modelled as {t.drifterLabel.toLowerCase()}
+            </dd>
+          </div>
+        </dl>
+      </aside>
+    </section>
+
+    {/* ------------------------------------------------------------ solution */}
+    <section class="wrap section" style="padding-top:0">
+      <div class="head">
+        <div class="head__meta">
+          <p class="label">Present solution</p>
+          <p class="label">Solved {fmtDate(SOLVED_ON)}</p>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <span class="stat__v">{yearsAdrift}<span class="stat__u">yr</span></span>
+          <span class="stat__k">Since release</span>
+        </div>
+        <div class="stat">
+          <span class="stat__v">{t.km.toLocaleString('en')}<span class="stat__u">km</span></span>
+          <span class="stat__k">Modelled travel</span>
+        </div>
+        <div class="stat">
+          <span class="stat__v">{t.kmPerDay}<span class="stat__u">km/d</span></span>
+          <span class="stat__k">Mean rate</span>
+        </div>
+        <div class="stat">
+          <span class="stat__v">{t.afloat}<span class="stat__u">/{t.members}</span></span>
+          <span class="stat__k">Members afloat</span>
+        </div>
+        <div class="stat">
+          <span class="stat__v">{t.spreadKm.toLocaleString('en')}<span class="stat__u">km</span></span>
+          <span class="stat__k">Ensemble spread</span>
+        </div>
+        <div class="stat">
+          <span class="stat__v">
+            {t.skill === null ? '—' : t.skill.toLocaleString('en')}<span class="stat__u">km</span>
+          </span>
+          <span class="stat__k">Median residual</span>
+        </div>
+      </div>
+
+      <p class="solnote dim">
+        Modelled position today
+        <span class="num" style="color:var(--ink)">
+          &nbsp;{fmtLat(t.now[1])} {fmtLon(t.now[0])}&nbsp;
+        </span>
+        {gyre ? `— held by the ${gyre.name}.` : '— outside any closed circulation.'}
+        {t.beachedBeforeNow && ' The representative unit is aground; the ensemble continues.'}
+      </p>
+    </section>
+
+    {/* ------------------------------------------------------------ sightings */}
+    <section class="wrap section" style="padding-top:0">
+      <div class="head">
+        <div class="head__meta">
+          <p class="label">Sighting log</p>
+          <p class="label">{c.sightings.length} entries</p>
+        </div>
+      </div>
+
+      <div class="tablewrap">
+        <table class="data" id="find-table">
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Position</th>
+              <th scope="col">Place</th>
+              <th scope="col">Logged</th>
+              <th scope="col">Source</th>
+              <th scope="col" class="ta-r">Residual</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              c.sightings.map((s, i) => {
+                const r = t.residuals[i];
+                return (
+                  <tr data-find={i} tabindex="0">
+                    <td class="num nowrap">{fmtDate(s.date)}</td>
+                    <td class="num nowrap">{fmtCoord(s.lat, s.lon)}</td>
+                    <td>
+                      {s.place}
+                      {s.note && <span class="findnote">{s.note}</span>}
+                    </td>
+                    <td>{s.count ?? '—'}</td>
+                    <td class="dim">{s.by ?? '—'}</td>
+                    <td class="ta-r num nowrap">
+                      {r.lapse > 0 ? (
+                        <span class="dim" title={`Every ensemble member was ashore ${r.lapse} days before this report`}>
+                          beyond model
+                        </span>
+                      ) : (
+                        <span class={r.km > 1500 ? 'resid resid--bad' : r.km > 500 ? 'resid' : 'resid resid--good'}>
+                          {r.km.toLocaleString('en')} km
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <p class="tablenote dim">
+        Residual is the closest any of the {t.members} ensemble members came to the reported
+        position, inside a ±{Math.round(RESIDUAL_WINDOW_DAYS / 30.4)} month window either side of
+        the report. Phase error dominates a drift this long, so a same-day comparison would
+        measure the clock rather than the map.
+      </p>
+    </section>
+
+    {/* ---------------------------------------------------------- field notes */}
+    <section class="wrap section" style="padding-top:0">
+      <div class="head">
+        <div class="head__meta">
+          <p class="label">From the file</p>
+          <p class="label">Marginalia, dated</p>
+        </div>
+      </div>
+
+      <ol class="notes">
+        {
+          c.notes.map((n, i) => (
+            <li data-reveal style={`--delay:${i * 70}ms`}>
+              <time class="notes__d num" datetime={n.date}>{fmtDate(n.date)}</time>
+              <p class="notes__t">{n.text}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    {/* ---------------------------------------------------------------- next */}
+    <nav class="wrap filenav" aria-label="Adjacent files">
+      <a class="filenav__a" href={`/registry/${prev.code}`}>
+        <span class="label">← Previous file</span>
+        <span class="filenav__n">{prev.name}</span>
+        <span class="code dim">{prev.code}</span>
+      </a>
+      <a class="filenav__a filenav__a--r" href={`/registry/${next.code}`}>
+        <span class="label">Next file →</span>
+        <span class="filenav__n">{next.name}</span>
+        <span class="code dim">{next.code}</span>
+      </a>
+    </nav>
+  </article>
+
+  <script
+    is:inline
+    type="application/json"
+    id="track-data"
+    set:html={JSON.stringify({
+      points: t.points.slice(0, t.nowIndex + 1),
+      days: t.days.slice(0, t.nowIndex + 1),
+      start: c.release.date,
+    })}
+  />
+</Base>
+
+<style>
+  .crumbs {
+    display: flex;
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-5);
+  }
+  .crumbs a {
+    text-decoration: none;
+  }
+  .crumbs a:hover {
+    color: var(--ink);
+    text-decoration: underline;
+  }
+
+  .file__h {
+    font-size: var(--step-5);
+    max-width: 18ch;
+  }
+
+  .file__sub {
+    margin-top: var(--sp-4);
+    max-width: 44ch;
+  }
+
+  .file__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2) var(--sp-4);
+    align-items: center;
+    margin-top: var(--sp-5);
+    padding-top: var(--sp-4);
+    border-top: 1px solid var(--rule);
+    font-size: var(--step--2);
+    font-family: var(--font-mono);
+  }
+
+  /* --- plate -------------------------------------------------------------- */
+  .platewrap {
+    position: relative;
+  }
+
+  .plate__rep {
+    stroke-width: 1.4;
+    stroke: color-mix(in srgb, var(--track) 62%, transparent);
+  }
+
+  /* The recent leg, so a long file still reads as having a near end. */
+  .plate__recent {
+    stroke-width: 2;
+    stroke: var(--track);
+    transition: opacity 200ms var(--ease);
+  }
+
+  .pin {
+    vector-effect: non-scaling-stroke;
+  }
+
+  .pin--release .pin__ring {
+    fill: none;
+    stroke: var(--ink-2);
+    stroke-width: 0.35;
+    vector-effect: non-scaling-stroke;
+  }
+  .pin--release .pin__dot {
+    fill: var(--ink-2);
+  }
+
+  .pin--find .pin__cross {
+    stroke: var(--signal);
+    stroke-width: 0.5;
+    vector-effect: non-scaling-stroke;
+  }
+  .pin--find .pin__hit {
+    fill: transparent;
+    stroke: var(--signal);
+    stroke-width: 0.3;
+    opacity: 0;
+    vector-effect: non-scaling-stroke;
+    transition: opacity 220ms var(--ease), transform 220ms var(--ease);
+  }
+  .pin--find.is-hot .pin__hit {
+    opacity: 1;
+    transform: scale(2);
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .pin--now .pin__halo {
+    fill: none;
+    stroke: var(--st-transit);
+    stroke-width: 0.4;
+    vector-effect: non-scaling-stroke;
+    opacity: 0.75;
+  }
+  .pin--now .pin__dot {
+    fill: var(--st-transit);
+  }
+
+  .offchart {
+    margin-top: var(--sp-3);
+    color: var(--signal);
+    text-transform: none;
+    letter-spacing: 0.02em;
+    max-width: 66ch;
+  }
+
+  .legend {
+    list-style: none;
+    padding: 0;
+    margin-top: var(--sp-3);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2) var(--sp-5);
+  }
+
+  .legend li {
+    display: flex;
+    align-items: center;
+    gap: 0.42rem;
+  }
+
+  .k {
+    width: 1.1rem;
+    height: 0;
+    border-top: 2px solid var(--track);
+    display: inline-block;
+  }
+  .k--now2 {
+    border-top-width: 3px;
+  }
+  .k--rep {
+    opacity: 0.62;
+  }
+  .k--ens {
+    border-top-width: 1px;
+    opacity: 0.4;
+  }
+  .k--fut {
+    border-top-style: dashed;
+    border-top-width: 1px;
+    opacity: 0.7;
+  }
+  .k--find {
+    border: 0;
+    width: 0.5rem;
+    height: 0.5rem;
+    background: var(--signal);
+    border-radius: 50%;
+  }
+  .k--now {
+    border: 0;
+    width: 0.5rem;
+    height: 0.5rem;
+    background: var(--st-transit);
+    border-radius: 50%;
+  }
+
+  /* --- scrubber ----------------------------------------------------------- */
+  .scrub {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: var(--sp-4);
+    align-items: center;
+    margin-top: var(--sp-4);
+    padding: var(--sp-3) var(--sp-4);
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+  }
+
+  .scrub input[type='range'] {
+    width: 100%;
+    accent-color: var(--signal);
+    cursor: ew-resize;
+  }
+
+  .scrub__out {
+    font-size: var(--step--1);
+    min-width: 15rem;
+    text-align: right;
+    color: var(--ink-2);
+  }
+
+  @media (min-width: 40.01rem) {
+    /* Only promise a single line where there is room for one. */
+    .scrub__out {
+      white-space: nowrap;
+    }
+  }
+
+  @media (max-width: 40rem) {
+    .scrub {
+      grid-template-columns: 1fr;
+      gap: var(--sp-2);
+    }
+    .scrub__out {
+      text-align: left;
+      min-width: 0;
+      line-height: 1.5;
+    }
+  }
+
+  /* --- dissent ------------------------------------------------------------ */
+  .dissent {
+    margin-top: var(--sp-6);
+    padding: var(--sp-4) var(--sp-5);
+    border: 1px solid var(--signal);
+    border-left-width: 3px;
+    border-radius: var(--radius);
+    background: color-mix(in srgb, var(--signal) 6%, transparent);
+    max-width: 60ch;
+  }
+
+  .dissent p + p {
+    margin-top: var(--sp-2);
+    font-size: var(--step--1);
+    color: var(--ink-2);
+  }
+
+  /* --- body --------------------------------------------------------------- */
+  .file__body {
+    display: grid;
+    gap: var(--sp-6);
+  }
+
+  @media (min-width: 62rem) {
+    .file__body {
+      grid-template-columns: 1.5fr 1fr;
+      gap: var(--sp-8);
+      align-items: start;
+    }
+  }
+
+  .facts {
+    border-top: 1px solid var(--ink);
+    padding-top: var(--sp-3);
+    position: sticky;
+    top: 5rem;
+  }
+
+  @media (max-width: 62rem) {
+    .facts {
+      position: static;
+    }
+  }
+
+  .solnote {
+    margin-top: var(--sp-4);
+    font-size: var(--step--1);
+    max-width: 66ch;
+  }
+
+  /* --- table -------------------------------------------------------------- */
+  .ta-r {
+    text-align: right;
+  }
+  .nowrap {
+    white-space: nowrap;
+  }
+
+  .findnote {
+    display: block;
+    font-size: var(--step--2);
+    color: var(--ink-3);
+    margin-top: 0.2rem;
+    max-width: 34ch;
+  }
+
+  .resid {
+    color: var(--st-grounded);
+  }
+  .resid--good {
+    color: var(--good);
+  }
+  .resid--bad {
+    color: var(--st-lost);
+  }
+
+  #find-table tbody tr {
+    transition: background 200ms var(--ease);
+    cursor: default;
+  }
+  #find-table tbody tr.is-hot,
+  #find-table tbody tr:hover {
+    background: var(--paper-2);
+  }
+
+  .tablenote {
+    margin-top: var(--sp-4);
+    font-size: var(--step--2);
+    max-width: 66ch;
+  }
+
+  /* --- notes -------------------------------------------------------------- */
+  .notes {
+    list-style: none;
+    padding: 0;
+    counter-reset: n;
+    border-top: 1px solid var(--ink);
+  }
+
+  .notes li {
+    display: grid;
+    gap: var(--sp-2) var(--sp-5);
+    padding: var(--sp-4) 0;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+
+  @media (min-width: 44rem) {
+    .notes li {
+      grid-template-columns: 9rem 1fr;
+    }
+  }
+
+  .notes__d {
+    font-size: var(--step--2);
+    letter-spacing: 0.1em;
+    color: var(--ink-3);
+  }
+
+  .notes__t {
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+    line-height: 1.45;
+    max-width: 54ch;
+    color: var(--ink-2);
+  }
+
+  /* --- file nav ----------------------------------------------------------- */
+  .filenav {
+    display: grid;
+    gap: var(--sp-4);
+    padding-block: var(--sp-6);
+    border-top: 1px solid var(--ink);
+  }
+
+  @media (min-width: 44rem) {
+    .filenav {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .filenav__a {
+    display: grid;
+    gap: 0.3rem;
+    text-decoration: none;
+    padding: var(--sp-4);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    transition: border-color 240ms var(--ease), background 240ms var(--ease);
+  }
+
+  .filenav__a:hover {
+    border-color: var(--ink);
+    background: var(--paper-2);
+  }
+
+  .filenav__a--r {
+    text-align: right;
+  }
+
+  .filenav__n {
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+  }
+</style>
+
+<script>
+  /* --- hover link between the sighting table and the chart pins ----------- */
+  // Pins and rows are paired by data-find, because a find that lies outside the
+  // plate has a row but no pin.
+  const pins = document.querySelectorAll<SVGGElement>('.pin--find');
+  const rows = document.querySelectorAll<HTMLTableRowElement>('#find-table tbody tr');
+  const pinFor = new Map<string, SVGGElement>();
+  pins.forEach((p) => pinFor.set(p.dataset.find ?? '', p));
+
+  function hot(el: HTMLElement | SVGGElement, on: boolean) {
+    const key = (el as HTMLElement).dataset.find ?? '';
+    pinFor.get(key)?.classList.toggle('is-hot', on);
+    rows.forEach((r) => {
+      if (r.dataset.find === key) r.classList.toggle('is-hot', on);
+    });
+  }
+
+  [...rows, ...pins].forEach((el) => {
+    el.addEventListener('mouseenter', () => hot(el, true));
+    el.addEventListener('mouseleave', () => hot(el, false));
+    el.addEventListener('focus', () => hot(el, true));
+    el.addEventListener('blur', () => hot(el, false));
+  });
+
+  /* --- time scrubber ------------------------------------------------------ */
+  interface TrackData {
+    points: [number, number][];
+    days: number[];
+    start: string;
+  }
+
+  const raw = document.getElementById('track-data')?.textContent;
+  const scrub = document.getElementById('scrub') as HTMLInputElement | null;
+  const out = document.getElementById('scrub-out');
+  const nowPin = document.getElementById('now-pin');
+  const repPath = document.getElementById('rep-path') as SVGPathElement | null;
+
+  if (raw && scrub && out && nowPin && repPath) {
+    const path = repPath;
+    const recent = document.getElementById('rep-recent') as SVGPathElement | null;
+    const readout = out;
+    const data: TrackData = JSON.parse(raw);
+    const dot = nowPin.querySelector('.pin__dot') as SVGCircleElement;
+    const halo = nowPin.querySelector('.pin__halo') as SVGCircleElement;
+    const RAD = Math.PI / 180;
+
+    // Cumulative distance so the readout can report travel at any date.
+    const cum = [0];
+    for (let i = 1; i < data.points.length; i++) {
+      const [x1, y1] = data.points[i - 1];
+      const [x2, y2] = data.points[i];
+      let dx = x2 - x1;
+      dx = ((dx + 540) % 360) - 180;
+      const dy = (y2 - y1) * RAD;
+      const dxr = dx * RAD * Math.cos(((y1 + y2) / 2) * RAD);
+      cum.push(cum[i - 1] + Math.hypot(dxr, dy) * 6371);
+    }
+
+    const t0 = Date.parse(data.start + 'T00:00:00Z');
+    const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    function render(i: number) {
+      const [lon, lat] = data.points[i];
+      dot.setAttribute('cx', String(lon + 180));
+      dot.setAttribute('cy', String(90 - lat));
+      halo.setAttribute('cx', String(lon + 180));
+      halo.setAttribute('cy', String(90 - lat));
+
+      const d = new Date(t0 + data.days[i] * 86400000);
+      const date = `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+      const yrs = (data.days[i] / 365.25).toFixed(1);
+      const la = `${Math.abs(lat).toFixed(1)}°${lat >= 0 ? 'N' : 'S'}`;
+      const lo = `${Math.abs(lon).toFixed(1)}°${lon >= 0 ? 'E' : 'W'}`;
+      readout.textContent = `${date} · ${yrs} yr · ${la} ${lo} · ${Math.round(cum[i]).toLocaleString('en')} km`;
+
+      // The recent-leg emphasis belongs to "today"; hide it while scrubbing back.
+      if (recent) recent.style.opacity = i >= data.points.length - 1 ? '1' : '0';
+
+      // Trim the drawn track to the scrubbed date.
+      const len = path.getTotalLength();
+      const frac = i / Math.max(1, data.points.length - 1);
+      path.style.strokeDasharray = `${len}`;
+      path.style.strokeDashoffset = `${len * (1 - frac)}`;
+    }
+
+    scrub.addEventListener('input', () => render(Number(scrub.value)));
+    render(Number(scrub.value));
+
+    // Draw the track in on first view, the way a plotter would.
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!reduce && 'IntersectionObserver' in window) {
+      const io = new IntersectionObserver(
+        ([e]) => {
+          if (!e.isIntersecting) return;
+          io.disconnect();
+          const total = path.getTotalLength();
+          path.style.transition = 'none';
+          repPath.style.strokeDashoffset = `${total}`;
+          requestAnimationFrame(() => {
+            repPath.style.transition = 'stroke-dashoffset 2200ms cubic-bezier(.22,.61,.36,1)';
+            repPath.style.strokeDashoffset = '0';
+            setTimeout(() => {
+              repPath.style.transition = 'none';
+            }, 2400);
+          });
+        },
+        { threshold: 0.2 },
+      );
+      io.observe(repPath);
+    }
+  }
+</script>
