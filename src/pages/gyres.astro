@@ -1,0 +1,477 @@
+---
+import Base from '../layouts/Base.astro';
+import Chart from '../components/Chart.astro';
+import { GYRES, JETS, BANDS } from '../lib/ocean.ts';
+import { CASES } from '../data/cases.ts';
+import { TRACKS } from '../data/generated/tracks.ts';
+import { cx, cy, WORLD } from '../lib/chart.ts';
+
+/** A polyline through the jet's control points, in chart units. */
+function jetPath(path: [number, number][]): string {
+  let d = '';
+  for (let i = 0; i < path.length; i++) {
+    const [lon, lat] = path[i];
+    const x = cx(lon);
+    const y = cy(lat);
+    if (i === 0) d += `M${x.toFixed(1)} ${y.toFixed(1)}`;
+    else if (Math.abs(lon - path[i - 1][0]) > 180) d += `M${x.toFixed(1)} ${y.toFixed(1)}`;
+    else d += `L${x.toFixed(1)} ${y.toFixed(1)}`;
+  }
+  return d;
+}
+
+/** Where the jet's label sits: at its midpoint. */
+function jetMid(path: [number, number][]): [number, number] {
+  const m = path[Math.floor(path.length / 2)];
+  return [cx(m[0]), cy(m[1])];
+}
+
+const held = GYRES.map((g) => ({
+  ...g,
+  files: CASES.filter((c) => TRACKS[c.code].gyre === g.id),
+}));
+
+const bandNames = ['Antarctic Circumpolar', 'North Equatorial', 'South Equatorial', 'Equatorial Counter'];
+---
+
+<Base
+  title="The Seven Circulations"
+  description="Seven closed rotations, twenty-three boundary currents and four zonal bands — the machinery that decides where a lost object goes and how long it takes."
+  nav="gyres"
+>
+  <section class="wrap section" style="padding-bottom:var(--sp-5)">
+    <div class="head">
+      <div class="head__meta">
+        <p class="label">The machinery</p>
+        <p class="label">7 gyres · {JETS.length} jets · {BANDS.length} bands</p>
+      </div>
+      <h1 class="g__h">Seven rotations, and a clock made of water</h1>
+    </div>
+
+    <div class="grid-2">
+      <p class="lede">
+        A gyre is not a place. It is a schedule.
+      </p>
+      <div class="prose">
+        <p>
+          Wind pushes the surface of the sea westward at the tropics and eastward at the middle
+          latitudes. The planet's rotation turns those pushes into closed loops — clockwise north
+          of the equator, anticlockwise south of it. Each loop has a period, and anything floating
+          inside it is on that timetable whether it knows or not.
+        </p>
+        <p>
+          The Registry models {GYRES.length} closed rotations, the {JETS.length} boundary currents
+          that give them their shape, and {BANDS.length} zonal bands. Every figure below is
+          measured from the model itself: a tracer is dropped on a gyre's northern arm and timed
+          until it returns.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  {/* ------------------------------------------------------------- big chart */}
+  <section class="wrap-wide" id="chart">
+    <div class="gwrap">
+    <Chart
+      frame={WORLD}
+      label="World chart of the seven modelled gyres and the major boundary currents"
+      class="gchart"
+    >
+      {/* boundary currents */}
+      {
+        JETS.map((j) => (
+          <g class="jet" data-jet={j.name}>
+            <path class="jet__line" d={jetPath(j.path)} style={`--k:${j.k}`} />
+            <title>{`${j.name} — peak ${(j.k * 111 * 1000 / 86400).toFixed(2)} m/s`}</title>
+          </g>
+        ))
+      }
+
+      {/* gyre ellipses */}
+      {
+        GYRES.map((g) => (
+          <g class="gyre" data-gyre={g.id}>
+            <ellipse
+              class="gyre__e"
+              cx={cx(g.lon)}
+              cy={cy(g.lat)}
+              rx={g.rx}
+              ry={g.ry}
+              style={`--spin:${g.spin}`}
+            />
+            <circle class="gyre__c" cx={cx(g.lon)} cy={cy(g.lat)} r="0.9" />
+            <text class="gyre__t" x={cx(g.lon)} y={cy(g.lat) - g.ry - 2.4} text-anchor="middle">
+              {g.short}
+            </text>
+            <text class="gyre__y" x={cx(g.lon)} y={cy(g.lat) + 1.6} text-anchor="middle">
+              {g.circuitYears.toFixed(1)} yr
+            </text>
+            <title>{`${g.name} — one circuit ≈ ${g.circuitYears} years`}</title>
+          </g>
+        ))
+      }
+
+      {/* jet labels, drawn last so they sit above everything */}
+      {
+        JETS.filter((j) => j.k >= 0.3).map((j) => {
+          const [x, y] = jetMid(j.path);
+          return (
+            <text class="jet__t" x={x} y={y - 1.6} text-anchor="middle">
+              {j.name}
+            </text>
+          );
+        })
+      }
+    </Chart>
+    </div>
+
+    <ul class="legend label">
+      <li><i class="k k--gyre"></i>Closed circulation, with direction of spin</li>
+      <li><i class="k k--jet"></i>Boundary current, weight by speed</li>
+      <li class="dim">Hover a row below to isolate a circulation</li>
+    </ul>
+  </section>
+
+  {/* ------------------------------------------------------------- the seven */}
+  <section class="wrap section">
+    <div class="head">
+      <div class="head__meta">
+        <p class="label">The seven</p>
+        <p class="label">Circuit time measured from the model</p>
+      </div>
+    </div>
+
+    <ol class="glist">
+      {
+        held.map((g, i) => (
+          <li class="grow" data-gyre-row={g.id} data-reveal style={`--delay:${i * 55}ms`}>
+            <div class="grow__head">
+              <span class="grow__spin" aria-hidden="true">{g.spin === 1 ? '↻' : '↺'}</span>
+              <div>
+                <h2 class="grow__name">{g.name}</h2>
+                <p class="grow__meta label">
+                  {g.ocean} · centre {Math.abs(g.lat).toFixed(0)}°{g.lat >= 0 ? 'N' : 'S'}{' '}
+                  {Math.abs(g.lon).toFixed(0)}°{g.lon >= 0 ? 'E' : 'W'} ·{' '}
+                  {g.spin === 1 ? 'clockwise' : 'anticlockwise'}
+                </p>
+              </div>
+              <span class="grow__yr num">
+                {g.circuitYears.toFixed(1)}<span class="grow__u">yr / circuit</span>
+              </span>
+            </div>
+
+            <p class="grow__blurb">{g.blurb}</p>
+
+            {g.files.length > 0 && (
+              <p class="grow__files label">
+                Currently holding:{' '}
+                {g.files.map((f, k) => (
+                  <>
+                    {k > 0 && <span aria-hidden="true"> · </span>}
+                    <a href={`/registry/${f.code}`}>{f.name}</a>
+                  </>
+                ))}
+              </p>
+            )}
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  {/* ------------------------------------------------------------ the bands */}
+  <section class="wrap section" style="padding-top:0">
+    <div class="head">
+      <div class="head__meta">
+        <p class="label">Zonal bands</p>
+        <p class="label">Not closed — they simply run</p>
+      </div>
+      <h2>Four currents that go all the way round, or try to</h2>
+    </div>
+
+    <div class="tablewrap">
+      <table class="data">
+        <thead>
+          <tr>
+            <th scope="col">Band</th>
+            <th scope="col">Latitude</th>
+            <th scope="col">Half-width</th>
+            <th scope="col">Direction</th>
+            <th scope="col" style="text-align:right">Peak speed</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            BANDS.map((b, i) => (
+              <tr>
+                <td>{bandNames[i]}</td>
+                <td class="num">
+                  {Math.abs(b.lat).toFixed(1)}°{b.lat >= 0 ? 'N' : 'S'}
+                </td>
+                <td class="num">{b.width}°</td>
+                <td>{b.u > 0 ? 'Eastward' : 'Westward'}</td>
+                <td class="num" style="text-align:right">
+                  {((Math.abs(b.u) * 111 * 1000) / 86400).toFixed(2)} m/s
+                </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <p class="tablenote dim">
+      The Antarctic Circumpolar Current is the only one with nothing in its way. It carries more
+      water than every river on Earth combined, and an object that joins it can circle the planet
+      without ever seeing a coast.
+    </p>
+
+    <p style="margin-top:var(--sp-6)">
+      <a class="btn" href="/drift">Put something in and watch</a>
+    </p>
+  </section>
+</Base>
+
+<style>
+  .g__h {
+    font-size: var(--step-5);
+    max-width: 20ch;
+    margin-bottom: var(--sp-5);
+  }
+
+  /* --- chart -------------------------------------------------------------- */
+  .jet__line {
+    fill: none;
+    stroke: var(--track);
+    stroke-linecap: round;
+    stroke-width: calc(0.6px + var(--k) * 2.6px);
+    opacity: 0.62;
+    vector-effect: non-scaling-stroke;
+    transition: opacity 300ms var(--ease);
+  }
+
+  .gyre__e {
+    fill: color-mix(in srgb, var(--track) 6%, transparent);
+    stroke: var(--track);
+    stroke-width: 0.9;
+    stroke-dasharray: 5 3.5;
+    vector-effect: non-scaling-stroke;
+    opacity: 0.85;
+    animation: spin 24s linear infinite;
+    animation-direction: var(--dir, normal);
+    transition: opacity 300ms var(--ease), fill 300ms var(--ease);
+  }
+
+  @keyframes spin {
+    to {
+      stroke-dashoffset: -68;
+    }
+  }
+
+  .gyre__c {
+    fill: var(--signal);
+    opacity: 0.9;
+  }
+
+  .gyre__t {
+    font-family: var(--font-mono);
+    font-size: 3.6px;
+    letter-spacing: 0.16px;
+    fill: var(--ink);
+    text-transform: uppercase;
+    paint-order: stroke;
+    stroke: var(--sea);
+    stroke-width: 1.4px;
+    stroke-linejoin: round;
+  }
+
+  .gyre__y {
+    font-family: var(--font-mono);
+    font-size: 3.1px;
+    fill: var(--signal);
+    paint-order: stroke;
+    stroke: var(--sea);
+    stroke-width: 1.2px;
+    stroke-linejoin: round;
+  }
+
+  .jet__t {
+    font-family: var(--font-mono);
+    font-size: 2.6px;
+    fill: var(--ink-3);
+    letter-spacing: 0.1px;
+    paint-order: stroke;
+    stroke: var(--sea);
+    stroke-width: 1.1px;
+    stroke-linejoin: round;
+  }
+
+  /* dim everything except the hovered circulation */
+  .gwrap.is-focused .gyre,
+  .gwrap.is-focused .jet {
+    opacity: 0.16;
+    transition: opacity 300ms var(--ease);
+  }
+
+  .gwrap.is-focused .gyre.is-on {
+    opacity: 1;
+  }
+
+  .legend {
+    list-style: none;
+    padding: 0;
+    margin-top: var(--sp-3);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2) var(--sp-5);
+  }
+
+  .legend li {
+    display: flex;
+    align-items: center;
+    gap: 0.42rem;
+  }
+
+  .k {
+    width: 1.1rem;
+    display: inline-block;
+  }
+
+  .k--gyre {
+    height: 0;
+    border-top: 2px dashed var(--track);
+  }
+
+  .k--jet {
+    height: 0;
+    border-top: 3px solid var(--track);
+    opacity: 0.62;
+  }
+
+  /* --- list --------------------------------------------------------------- */
+  .glist {
+    list-style: none;
+    padding: 0;
+    counter-reset: g;
+    border-top: 1px solid var(--ink);
+  }
+
+  .grow {
+    padding: var(--sp-5) 0;
+    border-bottom: 1px solid var(--rule-soft);
+    display: grid;
+    gap: var(--sp-3);
+    transition: background 280ms var(--ease), padding-left 280ms var(--ease);
+  }
+
+  .grow:hover {
+    background: color-mix(in srgb, var(--paper-2) 60%, transparent);
+    padding-left: var(--sp-3);
+  }
+
+  .grow__head {
+    display: grid;
+    grid-template-columns: 2rem 1fr auto;
+    gap: var(--sp-2) var(--sp-4);
+    align-items: baseline;
+  }
+
+  .grow__spin {
+    font-size: var(--step-2);
+    color: var(--track);
+    line-height: 1;
+  }
+
+  .grow__name {
+    font-size: var(--step-2);
+    line-height: 1.15;
+  }
+
+  .grow__meta {
+    margin-top: 0.25rem;
+  }
+
+  .grow__yr {
+    font-size: var(--step-2);
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .grow__u {
+    display: block;
+    font-size: 0.36em;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .grow__blurb {
+    grid-column: 1 / -1;
+    max-width: 66ch;
+    color: var(--ink-2);
+    font-size: var(--step--1);
+    padding-left: 2rem;
+  }
+
+  .grow__files {
+    grid-column: 1 / -1;
+    padding-left: 2rem;
+    text-transform: none;
+    letter-spacing: 0.02em;
+  }
+
+  .grow__files a {
+    color: var(--ink-2);
+  }
+
+  @media (max-width: 44rem) {
+    .grow__head {
+      grid-template-columns: 2rem 1fr;
+    }
+    .grow__yr {
+      grid-column: 2;
+      text-align: left;
+    }
+    .grow__blurb,
+    .grow__files {
+      padding-left: 0;
+    }
+  }
+
+  .tablenote {
+    margin-top: var(--sp-4);
+    font-size: var(--step--2);
+    max-width: 66ch;
+  }
+</style>
+
+<script>
+  // Hovering a row isolates that circulation on the chart above.
+  const chart = document.querySelector('.gwrap');
+  const rows = document.querySelectorAll<HTMLElement>('[data-gyre-row]');
+  const gyres = document.querySelectorAll<SVGGElement>('[data-gyre]');
+
+  function focus(id: string | null) {
+    if (!chart) return;
+    chart.classList.toggle('is-focused', id !== null);
+    gyres.forEach((g) => g.classList.toggle('is-on', g.dataset.gyre === id));
+  }
+
+  rows.forEach((row) => {
+    const id = row.dataset.gyreRow ?? null;
+    row.addEventListener('mouseenter', () => focus(id));
+    row.addEventListener('mouseleave', () => focus(null));
+    row.addEventListener('focusin', () => focus(id));
+    row.addEventListener('focusout', () => focus(null));
+  });
+
+  // Southern-hemisphere gyres spin the other way; reverse the marching dashes.
+  gyres.forEach((g) => {
+    const e = g.querySelector<SVGEllipseElement>('.gyre__e');
+    if (!e) return;
+    const spin = Number(e.style.getPropertyValue('--spin') || '1');
+    e.style.animationDirection = spin === 1 ? 'normal' : 'reverse';
+  });
+</script>
