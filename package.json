@@ -1,0 +1,37 @@
+{
+  "name": "drift-registry",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prebuild": "node scripts/build-geo.mjs && node scripts/build-tracks.mjs",
+    "predev": "node scripts/build-geo.mjs && node scripts/build-tracks.mjs",
+    "geo": "node scripts/build-geo.mjs",
+    "tracks": "node scripts/build-tracks.mjs",
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "shots": "node scripts/shots.mjs http://localhost:4321 shots"
+  },
+  "dependencies": {
+    "@fontsource-variable/newsreader": "^5.3.0",
+    "@fontsource-variable/public-sans": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "astro": "^5.18.2"
+  },
+  "allowScripts": {
+    "esbuild@0.27.7": true,
+    "esbuild@0.25.12": true,
+    "sharp@0.34.5": true
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/node": "^26.2.0",
+    "playwright-core": "^1.62.1",
+    "topojson-client": "^3.1.0",
+    "typescript": "^5.9.3",
+    "world-atlas": "^2.0.2"
+  },
+  "description": "The Drift Registry \u2014 a fictional hydrographic archive of objects lost at sea, with a real surface-current model."
+}
