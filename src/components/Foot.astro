@@ -1,0 +1,67 @@
+---
+import { SOLVED_ON } from '../data/generated/tracks.ts';
+import { CASES } from '../data/cases.ts';
+import { fmtDate } from '../lib/registry.ts';
+
+const open = CASES.filter((c) => c.status !== 'recovered').length;
+---
+
+<footer class="foot">
+  <div class="wrap-wide">
+    <div class="foot__grid">
+      <div>
+        <p class="label" style="margin-bottom:.6rem">Disclosure</p>
+        <p class="disclosure">
+          The Office of Pelagic Recovery is <strong>a fiction</strong>. It has no premises, no
+          staff and no legal standing. Case files marked <em>documented</em> are built around
+          real, publicly recorded loss events; files marked <em>reconstructed</em> or
+          <em>speculative</em> are invented. Nothing here is an official record.
+          <a href="/about#disclosure">Read the full note</a>.
+        </p>
+      </div>
+
+      <div>
+        <p class="label" style="margin-bottom:.6rem">Registry</p>
+        <ul class="foot__links">
+          <li><a href="/registry">All case files</a></li>
+          <li><a href="/drift">Drift simulator</a></li>
+          <li><a href="/gyres">The seven circulations</a></li>
+          <li><a href="/report">Report a find</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <p class="label" style="margin-bottom:.6rem">Status</p>
+        <ul class="foot__links">
+          <li><span class="dim">Files open</span> <span class="num">{open}</span></li>
+          <li><span class="dim">Last full re-solve</span> <span class="num">{fmtDate(SOLVED_ON)}</span></li>
+          <li><a href="/about#method">Method &amp; sources</a></li>
+          <li><a href="/about#colophon">Colophon</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <hr class="rule-soft" style="margin-top:var(--sp-6)" />
+    <p class="foot__end label">
+      <span>Nothing is lost. It is only in transit.</span>
+      <span aria-hidden="true">&nbsp;·&nbsp;</span>
+      <span>Ilwaco, Washington</span>
+      <span aria-hidden="true">&nbsp;·&nbsp;</span>
+      <span>Est. 1974</span>
+    </p>
+  </div>
+</footer>
+
+<style>
+  .foot__end {
+    margin-top: var(--sp-4);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+  }
+  .foot__links li {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--sp-4);
+  }
+</style>

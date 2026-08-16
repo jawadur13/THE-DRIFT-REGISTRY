@@ -1,0 +1,92 @@
+---
+import '@fontsource-variable/newsreader';
+import '@fontsource-variable/public-sans';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
+import '../styles/base.css';
+import Masthead from '../components/Masthead.astro';
+import Foot from '../components/Foot.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Route key used to mark the current nav item. */
+  nav?: string;
+  /** Suppress the default page frame for full-bleed pages. */
+  bare?: boolean;
+}
+
+const { title, description, nav, bare = false } = Astro.props;
+const full = `${title} — The Drift Registry`;
+---
+
+<!doctype html>
+<html lang="en" data-theme="chart">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{full}</title>
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="color-scheme" content="light dark" />
+    <meta property="og:title" content={full} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate icon" href="/favicon.svg" />
+
+    {/* Set the theme before first paint so the page never flashes. */}
+    <script is:inline>
+      (() => {
+        try {
+          const stored = localStorage.getItem('dr-theme');
+          const dark = stored
+            ? stored === 'night'
+            : matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.dataset.theme = dark ? 'night' : 'chart';
+        } catch {
+          /* storage blocked; the default light theme stands */
+        }
+        // Reveal-on-scroll only hides content once we know it can be shown
+        // again. Without this class every [data-reveal] block stays visible.
+        document.documentElement.classList.add('js');
+      })();
+    </script>
+  </head>
+
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <Masthead nav={nav} />
+    <main id="main" tabindex="-1" class={bare ? 'is-bare' : ''}>
+      <slot />
+    </main>
+    <Foot />
+
+    <script>
+      // Reveal-on-scroll. One observer, unobserving as it goes, and it is a
+      // no-op under prefers-reduced-motion because the CSS already shows
+      // everything.
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const targets = document.querySelectorAll<HTMLElement>('[data-reveal]');
+      if (reduce || !('IntersectionObserver' in window)) {
+        targets.forEach((el) => el.classList.add('is-in'));
+      } else {
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const e of entries) {
+              if (!e.isIntersecting) continue;
+              e.target.classList.add('is-in');
+              io.unobserve(e.target);
+            }
+          },
+          { rootMargin: '120px 0px -6% 0px', threshold: 0.04 },
+        );
+        targets.forEach((el) => io.observe(el));
+        // Safety net. The observer registers only once this module has run, so
+        // anything the reader scrolled past in the meantime would otherwise sit
+        // invisible until they scrolled back. Nothing stays hidden past this.
+        setTimeout(() => targets.forEach((el) => el.classList.add('is-in')), 1500);
+      }
+    </script>
+  </body>
+</html>
