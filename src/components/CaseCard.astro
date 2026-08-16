@@ -1,0 +1,167 @@
+---
+import type { CaseFile } from '../lib/registry.ts';
+import type { Track } from '../data/generated/tracks.ts';
+import { statusById, classById, fmtDate } from '../lib/registry.ts';
+import { fmtLat, fmtLon } from '../lib/chart.ts';
+
+interface Props {
+  case: CaseFile;
+  track: Track;
+  index?: number;
+}
+
+const { case: c, track, index = 0 } = Astro.props;
+const st = statusById(c.status);
+const cl = classById(c.class);
+---
+
+<li class="card" data-code={c.code} data-reveal style={`--delay:${Math.min(index, 6) * 55}ms`}>
+  <a class="card__link" href={`/registry/${c.code}`}>
+    <span class="card__code code">{c.code}</span>
+
+    <span class="card__body">
+      <span class="card__title">{c.name}</span>
+      <span class="card__sub">{c.subtitle}</span>
+      <span class="card__meta">
+        <span class={`pill pill--${st.token}`}>{st.label}</span>
+        <span class="dim">Class {c.class} · {cl.label}</span>
+        <span class={`basis basis--${c.basis}`}>{c.basis}</span>
+      </span>
+    </span>
+
+    <span class="card__num">
+      <span class="card__pos num">{fmtLat(track.now[1])} {fmtLon(track.now[0])}</span>
+      <span class="card__since label">Released {fmtDate(c.release.date)}</span>
+      {
+        track.dissent && (
+          <span class="card__flag label" title="The model does not support the filed status">
+            ⚑ model dissents
+          </span>
+        )
+      }
+    </span>
+
+    <span class="card__arrow" aria-hidden="true">→</span>
+  </a>
+</li>
+
+<style>
+  .card {
+    border-bottom: 1px solid var(--rule-soft);
+  }
+
+  .card__link {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--sp-2) var(--sp-5);
+    padding: var(--sp-5) 0;
+    text-decoration: none;
+    align-items: start;
+    position: relative;
+    transition: padding-left 340ms var(--ease);
+  }
+
+  .card__link::before {
+    content: '';
+    position: absolute;
+    inset: 0 -1rem;
+    background: var(--paper-2);
+    opacity: 0;
+    transition: opacity 300ms var(--ease);
+    z-index: -1;
+  }
+
+  .card__link:hover::before {
+    opacity: 0.7;
+  }
+
+  .card__link:hover {
+    padding-left: var(--sp-3);
+  }
+
+  .card__code {
+    grid-column: 1 / -1;
+    color: var(--ink-3);
+    font-size: var(--step--2);
+    letter-spacing: 0.14em;
+  }
+
+  .card__title {
+    display: block;
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    line-height: 1.15;
+    letter-spacing: -0.018em;
+    margin-bottom: 0.25rem;
+  }
+
+  .card__link:hover .card__title {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+  }
+
+  .card__sub {
+    display: block;
+    color: var(--ink-2);
+    font-size: var(--step--1);
+    max-width: 52ch;
+    margin-bottom: var(--sp-3);
+  }
+
+  .card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2) var(--sp-4);
+    align-items: center;
+    font-size: var(--step--2);
+    font-family: var(--font-mono);
+    letter-spacing: 0.06em;
+  }
+
+  .card__num {
+    display: grid;
+    gap: 0.28rem;
+    text-align: right;
+    justify-items: end;
+  }
+
+  .card__pos {
+    font-size: var(--step--1);
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+
+  .card__flag {
+    color: var(--signal);
+  }
+
+  .card__arrow {
+    position: absolute;
+    right: -1.2rem;
+    top: var(--sp-5);
+    color: var(--signal);
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 280ms var(--ease), transform 280ms var(--ease);
+    font-family: var(--font-mono);
+  }
+
+  .card__link:hover .card__arrow {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (max-width: 44rem) {
+    .card__link {
+      grid-template-columns: 1fr;
+    }
+    .card__num {
+      text-align: left;
+      justify-items: start;
+    }
+    .card__arrow {
+      display: none;
+    }
+  }
+</style>
