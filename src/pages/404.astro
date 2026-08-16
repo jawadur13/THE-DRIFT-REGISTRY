@@ -1,0 +1,114 @@
+---
+import Base from '../layouts/Base.astro';
+import { CASES } from '../data/cases.ts';
+
+const suggestions = CASES.slice(0, 4);
+---
+
+<Base
+  title="No such file"
+  description="That reference is not held by the Registry."
+  nav=""
+>
+  <section class="wrap section nf">
+    <p class="label">Error 404 · reference not held</p>
+
+    <h1 class="nf__h">
+      Not lost.<br />
+      <em>Just never filed.</em>
+    </h1>
+
+    <p class="prose nf__p">
+      The Registry holds sixteen case files and nothing else. Whatever you were looking for has
+      either drifted out of the archive or was never entered into it — and the Office's position
+      on that distinction is, as always, that it does not matter much. It is somewhere.
+    </p>
+
+    <div class="cluster nf__cta">
+      <a class="btn btn--solid" href="/registry">Open the registry</a>
+      <a class="btn" href="/">Front page</a>
+    </div>
+
+    <div class="nf__list">
+      <p class="label">Try one of these</p>
+      <ul>
+        {
+          suggestions.map((c) => (
+            <li>
+              <a href={`/registry/${c.code}`}>
+                <span class="code">{c.code}</span>
+                <span>{c.name}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .nf {
+    min-height: 66svh;
+    display: grid;
+    align-content: center;
+  }
+
+  .nf__h {
+    margin-top: var(--sp-5);
+    font-size: var(--step-6);
+    font-weight: 300;
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+  }
+
+  .nf__h em {
+    font-style: italic;
+    color: var(--signal);
+  }
+
+  .nf__p {
+    margin-top: var(--sp-5);
+  }
+
+  .nf__cta {
+    margin-top: var(--sp-6);
+  }
+
+  .nf__list {
+    margin-top: var(--sp-8);
+    padding-top: var(--sp-4);
+    border-top: 1px solid var(--rule);
+  }
+
+  .nf__list ul {
+    list-style: none;
+    padding: 0;
+    margin-top: var(--sp-3);
+    display: grid;
+    gap: 0;
+  }
+
+  .nf__list a {
+    display: grid;
+    grid-template-columns: 9.5rem 1fr;
+    gap: var(--sp-4);
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--rule-soft);
+    text-decoration: none;
+    color: var(--ink-2);
+    transition: color 200ms var(--ease), padding-left 240ms var(--ease);
+  }
+
+  .nf__list a:hover {
+    color: var(--ink);
+    padding-left: var(--sp-2);
+  }
+
+  @media (max-width: 34rem) {
+    .nf__list a {
+      grid-template-columns: 1fr;
+      gap: 0.15rem;
+    }
+  }
+</style>
