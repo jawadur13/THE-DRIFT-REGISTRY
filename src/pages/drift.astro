@@ -1,0 +1,763 @@
+---
+import Base from '../layouts/Base.astro';
+import { DRIFTERS } from '../lib/ocean.ts';
+
+const defaultKind = DRIFTERS.find((d) => d.id === 'toy') ?? DRIFTERS[0];
+---
+
+<Base
+  title="Drift Simulator"
+  description="Release an object anywhere in the world ocean and watch twenty years of drift, computed with the same model that solves every file in the Registry."
+  nav="drift"
+  bare={true}
+>
+  <div class="sim">
+    {/* ------------------------------------------------------------- canvas */}
+    <div class="sim__stage">
+      <canvas id="sim-field" aria-label="Interactive chart of the world ocean"></canvas>
+
+      <div class="sim__hint" id="sim-hint">
+        <p class="label">Drift Simulator</p>
+        <p class="sim__hintbig">Click any water to release.</p>
+        <p class="sim__hintsm">
+          Twenty years of drift, integrated against the same surface-current model that solves
+          every case file in this archive. Land is real, and objects strand on it. Drag to move
+          the chart.
+        </p>
+      </div>
+
+      <p class="sim__cursor num" id="sim-cursor" aria-hidden="true"></p>
+
+      <div class="sim__readout" id="sim-readout" hidden>
+        <dl>
+          <div>
+            <dt class="label">Elapsed</dt>
+            <dd class="num" id="r-years">0.0 yr</dd>
+          </div>
+          <div>
+            <dt class="label">Afloat</dt>
+            <dd class="num" id="r-afloat">—</dd>
+          </div>
+          <div>
+            <dt class="label">Median spread</dt>
+            <dd class="num" id="r-spread">—</dd>
+          </div>
+          <div>
+            <dt class="label">Furthest unit</dt>
+            <dd class="num" id="r-far">—</dd>
+          </div>
+          <div>
+            <dt class="label">Held by</dt>
+            <dd id="r-gyre">—</dd>
+          </div>
+        </dl>
+        <div class="sim__bar" aria-hidden="true"><i id="r-bar"></i></div>
+      </div>
+
+      <div class="sim__compare" id="sim-compare" hidden>
+        <p class="label">Matched pair</p>
+        <table class="cmp">
+          <tbody id="cmp-body"></tbody>
+        </table>
+        <p class="cmp__note">
+          Same wave, same water. The difference is how much of each object stands above the
+          surface.
+        </p>
+      </div>
+    </div>
+
+    {/* ------------------------------------------------------------ controls */}
+    <aside class="sim__panel">
+      <div class="panelhead">
+        <p class="label">Release profile</p>
+        <a class="label" href="/registry" style="text-decoration:none">← Registry</a>
+      </div>
+
+      <div class="kinds" role="radiogroup" aria-label="Object type">
+        {
+          DRIFTERS.map((d) => (
+            <label class="kind">
+              <input
+                type="radio"
+                name="kind"
+                value={d.id}
+                data-windage={d.windage}
+                data-label={d.label}
+                checked={d.id === defaultKind.id}
+              />
+              <span class="kind__in">
+                <span class="kind__row">
+                  <span class="kind__name">{d.label}</span>
+                  <span class="kind__w num">{d.windage.toFixed(2)}</span>
+                </span>
+                <span class="kind__meter" aria-hidden="true">
+                  <i style={`width:${(d.windage / 0.34) * 100}%`}></i>
+                </span>
+                <span class="kind__note">{d.freeboard} above the waterline. {d.note}</span>
+              </span>
+            </label>
+          ))
+        }
+      </div>
+
+      <p class="panelnote">
+        <strong>Windage</strong> is the share of the wind's push an object takes on. A shoe rides
+        low and goes where the water goes. A hollow toy rides high and gets blown. Two objects
+        released in the same wave can finish on different continents, and this number is why.
+      </p>
+
+      <div class="ctrls">
+        <button class="btn btn--solid" id="c-play" type="button" aria-pressed="true">Pause</button>
+        <button class="btn btn--ghost" id="c-clear" type="button">Clear</button>
+      </div>
+
+      <div class="field">
+        <label for="c-speed">Rate — <span class="num" id="c-speed-v">90</span> days per second</label>
+        <input id="c-speed" type="range" min="10" max="400" value="90" step="10" />
+      </div>
+
+      <div class="field">
+        <label for="c-count">Units per release — <span class="num" id="c-count-v">120</span></label>
+        <input id="c-count" type="range" min="20" max="400" value="120" step="20" />
+      </div>
+
+      <label class="check">
+        <input type="checkbox" id="c-pair" />
+        <span>
+          <strong>Matched pair</strong>
+          <span class="check__note">
+            Release the selected object <em>and</em> a contrasting one at the same point, and
+            watch them separate.
+          </span>
+        </span>
+      </label>
+
+      <div class="presets">
+        <p class="label">Try a known release</p>
+        <ul>
+          <li><button type="button" data-lon="178.1" data-lat="44.7" data-kind="toy">Floatees, 1992 — 44.7°N 178.1°E</button></li>
+          <li><button type="button" data-lon="-79.6" data-lat="26.5" data-kind="bottle">Gulf Stream, off Florida</button></li>
+          <li><button type="button" data-lon="143.6" data-lat="38.6" data-kind="glove">Sanriku, 2011</button></li>
+          <li><button type="button" data-lon="-7.6" data-lat="57.0" data-kind="card">Sound of Barra, 1959</button></li>
+          <li><button type="button" data-lon="-25" data-lat="-30" data-kind="float">South Atlantic gyre</button></li>
+        </ul>
+      </div>
+
+      <p class="panelfoot dim">
+        Released units are integrated with the exact model, not a cached approximation. The
+        background flow is a 2° lookup, refreshed continuously — decoration, not data.
+      </p>
+    </aside>
+  </div>
+</Base>
+
+<style>
+  main.is-bare {
+    display: block;
+  }
+
+  .sim {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr);
+    min-height: calc(100svh - 3.4rem);
+  }
+
+  @media (min-width: 62rem) {
+    .sim {
+      grid-template-columns: 1fr 22rem;
+    }
+  }
+
+  /* --- stage -------------------------------------------------------------- */
+  .sim__stage {
+    position: relative;
+    min-height: 62svh;
+    touch-action: none;
+    background: var(--sea);
+    overflow: hidden;
+    cursor: crosshair;
+  }
+
+  #sim-field {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .sim__hint {
+    position: absolute;
+    left: var(--gutter);
+    top: clamp(1.5rem, 5vh, 3rem);
+    max-width: 26rem;
+    z-index: 2;
+    pointer-events: none;
+    padding: var(--sp-4) var(--sp-5) var(--sp-5);
+    background: color-mix(in srgb, var(--paper) 84%, transparent);
+    backdrop-filter: blur(8px);
+    border-left: 2px solid var(--signal);
+    border-radius: var(--radius);
+    transition: opacity 600ms var(--ease), transform 600ms var(--ease);
+  }
+
+  .sim__hint[data-gone='true'] {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  @media (max-width: 46rem) {
+    .sim__hint {
+      right: var(--gutter);
+      max-width: none;
+    }
+    .sim__hintbig {
+      font-size: var(--step-2);
+    }
+    .sim__hintsm {
+      font-size: var(--step--2);
+      max-width: none;
+    }
+    .sim__hint {
+      padding: var(--sp-3) var(--sp-4) var(--sp-4);
+    }
+  }
+
+  .sim__hintbig {
+    font-family: var(--font-display);
+    font-size: var(--step-4);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: var(--sp-3) 0 var(--sp-3);
+  }
+
+  .sim__hintsm {
+    font-size: var(--step--1);
+    color: var(--ink-2);
+    max-width: 34ch;
+  }
+
+  .sim__cursor {
+    position: absolute;
+    right: var(--gutter);
+    top: 1rem;
+    z-index: 3;
+    font-size: var(--step--2);
+    letter-spacing: 0.08em;
+    color: var(--ink-2);
+    background: color-mix(in srgb, var(--paper) 82%, transparent);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 200ms var(--ease);
+  }
+
+  .sim__stage:hover .sim__cursor {
+    opacity: 1;
+  }
+
+  .sim__readout {
+    position: absolute;
+    left: var(--gutter);
+    bottom: var(--gutter);
+    z-index: 3;
+    padding: var(--sp-4) var(--sp-5) var(--sp-3);
+    background: color-mix(in srgb, var(--paper) 90%, transparent);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    min-width: min(26rem, calc(100vw - var(--gutter) * 2));
+  }
+
+  .sim__readout dl {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+    gap: var(--sp-3) var(--sp-5);
+  }
+
+  .sim__readout dd {
+    margin: 0;
+    font-size: var(--step-1);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+
+  .sim__bar {
+    margin-top: var(--sp-3);
+    height: 2px;
+    background: var(--rule);
+  }
+
+  .sim__bar i {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--signal);
+    transition: width 200ms linear;
+  }
+
+  .sim__compare {
+    position: absolute;
+    right: var(--gutter);
+    bottom: var(--gutter);
+    z-index: 3;
+    padding: var(--sp-3) var(--sp-4);
+    background: color-mix(in srgb, var(--paper) 90%, transparent);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    max-width: min(22rem, calc(100vw - var(--gutter) * 2));
+  }
+
+  .cmp {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--step--2);
+    font-family: var(--font-mono);
+    margin-top: var(--sp-2);
+  }
+
+  .cmp td {
+    padding: 0.2rem 0.4rem 0.2rem 0;
+    white-space: nowrap;
+  }
+
+  .cmp td:last-child {
+    text-align: right;
+    padding-right: 0;
+  }
+
+  .cmp__swatch {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    margin-right: 0.4rem;
+  }
+
+  .cmp__note {
+    margin-top: var(--sp-2);
+    font-size: var(--step--2);
+    color: var(--ink-3);
+    line-height: 1.4;
+  }
+
+  @media (max-width: 62rem) {
+    .sim__compare {
+      position: static;
+      margin: var(--sp-4) var(--gutter);
+      max-width: none;
+    }
+    .sim__readout {
+      position: static;
+      margin: var(--sp-4) var(--gutter) 0;
+      min-width: 0;
+    }
+    .sim__stage {
+      display: grid;
+      grid-template-rows: 62svh auto auto;
+      padding-bottom: var(--sp-4);
+    }
+    #sim-field {
+      position: relative;
+      inset: auto;
+      height: 62svh;
+    }
+    .sim__hint {
+      top: 1rem;
+    }
+  }
+
+  /* --- panel -------------------------------------------------------------- */
+  .sim__panel {
+    border-left: 1px solid var(--rule);
+    padding: var(--sp-5) var(--sp-5) var(--sp-7);
+    background: var(--paper);
+    display: grid;
+    gap: var(--sp-5);
+    align-content: start;
+    overflow-y: auto;
+    max-height: calc(100svh - 3.4rem);
+  }
+
+  @media (max-width: 62rem) {
+    .sim__panel {
+      border-left: 0;
+      border-top: 1px solid var(--ink);
+      max-height: none;
+      padding-inline: var(--gutter);
+    }
+  }
+
+  .panelhead {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding-bottom: var(--sp-3);
+    border-bottom: 1px solid var(--ink);
+  }
+
+  .kinds {
+    display: grid;
+    gap: 1px;
+    background: var(--rule-soft);
+    border: 1px solid var(--rule-soft);
+  }
+
+  .kind {
+    display: block;
+    background: var(--paper);
+    cursor: pointer;
+    transition: background 200ms var(--ease);
+  }
+
+  .kind:hover {
+    background: var(--paper-2);
+  }
+
+  .kind input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .kind__in {
+    display: grid;
+    gap: 0.3rem;
+    padding: 0.6rem 0.7rem;
+    border-left: 2px solid transparent;
+  }
+
+  .kind input:checked + .kind__in {
+    border-left-color: var(--signal);
+    background: var(--paper-2);
+  }
+
+  .kind input:focus-visible + .kind__in {
+    outline: 2px solid var(--signal);
+    outline-offset: -2px;
+  }
+
+  .kind__row {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    align-items: baseline;
+  }
+
+  .kind__name {
+    font-size: var(--step--1);
+  }
+
+  .kind__w {
+    font-size: var(--step--2);
+    color: var(--ink-3);
+  }
+
+  .kind__meter {
+    display: block;
+    height: 2px;
+    background: var(--rule-soft);
+  }
+
+  .kind__meter i {
+    display: block;
+    height: 100%;
+    background: var(--track);
+  }
+
+  .kind input:checked + .kind__in .kind__meter i {
+    background: var(--signal);
+  }
+
+  .kind__note {
+    font-size: var(--step--2);
+    color: var(--ink-3);
+    line-height: 1.4;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 320ms var(--ease), opacity 260ms var(--ease);
+  }
+
+  .kind input:checked + .kind__in .kind__note {
+    max-height: 8rem;
+    opacity: 1;
+  }
+
+  .panelnote {
+    font-size: var(--step--2);
+    color: var(--ink-2);
+    line-height: 1.55;
+    border-left: 2px solid var(--rule);
+    padding-left: var(--sp-3);
+  }
+
+  .ctrls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-3);
+  }
+
+  .ctrls .btn {
+    justify-content: center;
+  }
+
+  input[type='range'] {
+    width: 100%;
+    accent-color: var(--signal);
+  }
+
+  .check {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--sp-3);
+    align-items: start;
+    font-size: var(--step--1);
+    cursor: pointer;
+    padding: var(--sp-3);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    transition: border-color 200ms var(--ease);
+  }
+
+  .check:hover {
+    border-color: var(--ink-3);
+  }
+
+  .check input {
+    accent-color: var(--signal);
+    margin-top: 0.25rem;
+  }
+
+  .check__note {
+    display: block;
+    font-size: var(--step--2);
+    color: var(--ink-3);
+    margin-top: 0.2rem;
+    line-height: 1.45;
+  }
+
+  .presets ul {
+    list-style: none;
+    padding: 0;
+    margin-top: var(--sp-2);
+    display: grid;
+    gap: 1px;
+  }
+
+  .presets button {
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--rule-soft);
+    padding: 0.45rem 0;
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: color 180ms var(--ease), padding-left 220ms var(--ease);
+  }
+
+  .presets button:hover {
+    color: var(--signal);
+    padding-left: 0.35rem;
+  }
+
+  .panelfoot {
+    font-size: var(--step--2);
+    line-height: 1.5;
+  }
+</style>
+
+<script>
+  import { DriftCanvas, HORIZON_DAYS, type SimState } from '../islands/drift-canvas.ts';
+  import { DRIFTERS } from '../lib/ocean.ts';
+
+  const cv = document.getElementById('sim-field') as HTMLCanvasElement | null;
+  const stage = document.querySelector('.sim__stage') as HTMLElement | null;
+  if (!cv || !stage) throw new Error('simulator markup missing');
+
+  const hint = document.getElementById('sim-hint')!;
+  const readout = document.getElementById('sim-readout')!;
+  const compare = document.getElementById('sim-compare')!;
+  const cmpBody = document.getElementById('cmp-body')!;
+  const cursor = document.getElementById('sim-cursor')!;
+
+  const rYears = document.getElementById('r-years')!;
+  const rAfloat = document.getElementById('r-afloat')!;
+  const rSpread = document.getElementById('r-spread')!;
+  const rFar = document.getElementById('r-far')!;
+  const rGyre = document.getElementById('r-gyre')!;
+  const rBar = document.getElementById('r-bar')!;
+
+  const playBtn = document.getElementById('c-play') as HTMLButtonElement;
+  const clearBtn = document.getElementById('c-clear') as HTMLButtonElement;
+  const speed = document.getElementById('c-speed') as HTMLInputElement;
+  const speedV = document.getElementById('c-speed-v')!;
+  const countEl = document.getElementById('c-count') as HTMLInputElement;
+  const countV = document.getElementById('c-count-v')!;
+  const pair = document.getElementById('c-pair') as HTMLInputElement;
+
+  const km = (n: number) => `${Math.round(n).toLocaleString('en')} km`;
+
+  function onState(s: SimState) {
+    const has = s.released > 0;
+    readout.hidden = !has;
+    if (has) hint.dataset.gone = 'true';
+
+    rYears.textContent = `${(s.days / 365.25).toFixed(1)} yr`;
+    rAfloat.textContent = has ? `${s.afloat}/${s.released}` : '—';
+    rSpread.textContent = has ? km(s.spreadKm) : '—';
+    rFar.textContent = has ? km(s.furthestKm) : '—';
+    rGyre.textContent = s.gyreName ?? (has ? 'no closed circulation' : '—');
+    rBar.style.width = `${Math.min(100, (s.days / HORIZON_DAYS) * 100)}%`;
+
+    playBtn.textContent = s.done ? 'Finished' : s.running ? 'Pause' : 'Play';
+    playBtn.setAttribute('aria-pressed', String(s.running));
+    playBtn.disabled = s.done;
+
+    const many = s.groups.length > 1;
+    compare.hidden = !many;
+    if (many) {
+      cmpBody.innerHTML = s.groups
+        .map(
+          (g) => `<tr>
+            <td><span class="cmp__swatch" style="background:var(${g.tint === 0 ? '--signal' : '--st-recovered'})"></span>${g.label}</td>
+            <td>w ${g.windage.toFixed(2)}</td>
+            <td>${g.afloat}/${g.released}</td>
+            <td>${km(g.spreadKm)}</td>
+          </tr>`,
+        )
+        .join('');
+    }
+  }
+
+  const field = new DriftCanvas({
+    canvas: cv,
+    frame: { lonFrom: -180, lonTo: 180, latFrom: -64, latTo: 74 },
+    mode: 'sim',
+    density: 2200,
+    onState,
+  });
+  field.warm(90);
+  field.start();
+
+  function selected() {
+    const el = document.querySelector<HTMLInputElement>('input[name="kind"]:checked');
+    const id = el?.value ?? 'toy';
+    return DRIFTERS.find((d) => d.id === id) ?? DRIFTERS[0];
+  }
+
+  const bottle = DRIFTERS.find((d) => d.id === 'bottle')!;
+  const card = DRIFTERS.find((d) => d.id === 'card')!;
+
+  /** The control object: a bottle, unless the bottle is what's being tested. */
+  const counterpart = (kind: (typeof DRIFTERS)[number]) =>
+    kind.id === bottle.id ? card : bottle;
+
+  function releaseAt(lon: number, lat: number) {
+    const kind = selected();
+    const n = Number(countEl.value);
+    const ok = field.release(lon, lat, kind.windage, n, 0, kind.label);
+    if (!ok) {
+      cursor.textContent = 'that is land';
+      return;
+    }
+    if (pair.checked) {
+      const other = counterpart(kind);
+      field.release(lon, lat, other.windage, n, 1, other.label);
+    }
+    if (!field.isRunning) field.start();
+  }
+
+  // A press that moves is a pan; a press that does not is a release.
+  let down: { x: number; y: number; id: number } | null = null;
+  let dragged = false;
+
+  cv.addEventListener('pointerdown', (e) => {
+    down = { x: e.clientX, y: e.clientY, id: e.pointerId };
+    dragged = false;
+    // The instructions have done their job the moment the chart is touched.
+    hint.dataset.gone = 'true';
+    cv.setPointerCapture(e.pointerId);
+  });
+
+  cv.addEventListener('pointermove', (e) => {
+    const [lon, lat] = field.toLonLat(e.clientX, e.clientY);
+    const la = `${Math.abs(lat).toFixed(1)}°${lat >= 0 ? 'N' : 'S'}`;
+    const lo = `${Math.abs(lon).toFixed(1)}°${lon >= 0 ? 'E' : 'W'}`;
+    cursor.textContent = `${la} ${lo}`;
+
+    if (!down) return;
+    const dx = e.clientX - down.x;
+    const dy = e.clientY - down.y;
+    if (!dragged && Math.hypot(dx, dy) < 5) return;
+    dragged = true;
+    field.panBy(dx, dy);
+    down.x = e.clientX;
+    down.y = e.clientY;
+  });
+
+  function endPointer(e: PointerEvent) {
+    if (!down) return;
+    if (cv!.hasPointerCapture(e.pointerId)) cv!.releasePointerCapture(e.pointerId);
+    if (!dragged) {
+      const [lon, lat] = field.toLonLat(e.clientX, e.clientY);
+      releaseAt(lon, lat);
+    }
+    down = null;
+  }
+
+  cv.addEventListener('pointerup', endPointer);
+  cv.addEventListener('pointercancel', () => {
+    down = null;
+  });
+
+  function setCursorStyle() {
+    cv!.style.cursor = field.pannable ? 'grab' : 'crosshair';
+  }
+  setCursorStyle();
+  window.addEventListener('resize', setCursorStyle);
+
+  playBtn.addEventListener('click', () => field.toggle());
+  clearBtn.addEventListener('click', () => field.clear());
+
+  speed.addEventListener('input', () => {
+    speedV.textContent = speed.value;
+    field.setSpeed(Number(speed.value));
+  });
+
+  countEl.addEventListener('input', () => {
+    countV.textContent = countEl.value;
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('.presets button').forEach((b) => {
+    b.addEventListener('click', () => {
+      const kindId = b.dataset.kind;
+      if (kindId) {
+        const radio = document.querySelector<HTMLInputElement>(
+          `input[name="kind"][value="${kindId}"]`,
+        );
+        if (radio) radio.checked = true;
+      }
+      field.clear();
+      releaseAt(Number(b.dataset.lon), Number(b.dataset.lat));
+    });
+  });
+
+  // Keyboard: space toggles, C clears — but never while typing in a control.
+  document.addEventListener('keydown', (e) => {
+    const el = document.activeElement;
+    if (el instanceof HTMLInputElement || el instanceof HTMLButtonElement) return;
+    if (e.code === 'Space') {
+      e.preventDefault();
+      field.toggle();
+    } else if (e.key.toLowerCase() === 'c') {
+      field.clear();
+    }
+  });
+</script>
