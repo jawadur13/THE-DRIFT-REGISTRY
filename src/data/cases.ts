@@ -1,0 +1,1033 @@
+/**
+ * cases.ts — the Registry itself.
+ *
+ * Sixteen open files. Each entry carries only what a human wrote down: where a
+ * thing went into the water, what it was made of, and who saw it afterwards.
+ * Every number that describes where the object is *now* is computed from
+ * src/lib/ocean.ts at build time and is never stored here.
+ *
+ * `basis` is load-bearing and is printed on every card:
+ *   documented    — built around a publicly recorded loss event
+ *   reconstructed — assembled from partial records; details are inferred
+ *   speculative   — invented for this Registry
+ *
+ * The Office of Pelagic Recovery is fictional. See /about.
+ */
+import type { CaseFile } from '../lib/registry.ts';
+
+export const CASES: CaseFile[] = [
+  {
+    code: 'DR-1992-0031',
+    name: 'The Floatees',
+    subtitle: 'Twenty-eight thousand eight hundred bath toys, released at once',
+    class: 'I',
+    status: 'in-transit',
+    basis: 'documented',
+    drifter: 'toy',
+    ocean: 'Pacific',
+    release: {
+      date: '1992-01-10',
+      lat: 44.7,
+      lon: 178.1,
+      place: 'North Pacific, south of the Aleutian chain',
+      vessel: 'Container vessel, Hong Kong to Tacoma',
+    },
+    strand: 0.0015,
+    quantity: '28,800 units in twelve twelve-packs per carton',
+    materials: ['Moulded polyethylene', 'Cardboard backing (lost within days)'],
+    seed: 31,
+    featured: true,
+    summary: [
+      'A container went over the side in a winter storm and split. Inside were twenty-eight thousand eight hundred plastic bath toys — yellow ducks, blue turtles, green frogs, red beavers — packaged in card that dissolved almost immediately. What entered the water was not a container of toys but a single flat sheet of them, roughly the area of a football pitch, drifting.',
+      'The Registry regards this as the most useful loss event in its history. The toys are identical, they are individually countable, they float high, and they are the colour of a warning sign. When they began to come ashore in the Gulf of Alaska ten months later, the arrival dates could be read backwards into a map of the current — which is exactly what happened.',
+      'They have not stopped arriving. Because the object rides so high in the water, wind does a great deal of the work, and the field long ago stopped behaving as one population. Individual toys have been logged more than a decade and half an ocean apart.',
+    ],
+    notes: [
+      {
+        date: '1992-11-16',
+        text: 'First arrivals confirmed on the outer Alaskan coast. Ten months, near enough, from release. Faster than any of us guessed.',
+      },
+      {
+        date: '1995-04-02',
+        text: 'A second wave, further south, and bleached almost white. Pigment loss is now our best rough clock: a sun-white toy has been out at least three summers.',
+      },
+      {
+        date: '2003-07-30',
+        text: 'Reports from the North Atlantic. If correct, some fraction of the field has left the Pacific entirely by way of the Arctic. We are treating these as unconfirmed but we are not dismissing them.',
+      },
+    ],
+    sightings: [
+      {
+        date: '1992-11-16',
+        lat: 57.05,
+        lon: -135.33,
+        place: 'Outer coast near Sitka, Alaska',
+        count: 'approx. 400 logged in ten days',
+        by: 'Beachcomber network, southeast Alaska',
+      },
+      {
+        date: '1993-05-04',
+        lat: 53.25,
+        lon: -132.1,
+        place: 'Haida Gwaii, British Columbia',
+        count: '61',
+        by: 'Field station 2',
+      },
+      {
+        date: '1996-09-11',
+        lat: 45.9,
+        lon: -123.96,
+        place: 'Clatsop Spit, Oregon',
+        count: '9',
+        by: 'Volunteer log',
+        note: 'All four moulds present. Pigment substantially gone.',
+      },
+      {
+        date: '2007-06-22',
+        lat: 58.6,
+        lon: -6.2,
+        place: 'Isle of Lewis, Outer Hebrides',
+        count: '1',
+        by: 'Correspondent',
+        note: 'Mould consistent. Provenance not established. Filed as probable.',
+      },
+    ],
+  },
+
+  {
+    code: 'DR-1990-0114',
+    name: 'The Hansa Carrier Consignment',
+    subtitle: 'Sixty-one thousand shoes, and the discovery that shoes are instruments',
+    class: 'I',
+    status: 'dispersed',
+    basis: 'documented',
+    drifter: 'shoe',
+    ocean: 'Pacific',
+    release: {
+      date: '1990-05-27',
+      lat: 48.0,
+      lon: -161.0,
+      place: 'North Pacific, mid-basin',
+      vessel: 'Hansa Carrier',
+    },
+    quantity: '61,280 athletic shoes; five containers, four of which opened',
+    materials: ['Rubber', 'Nylon', 'Closed-cell foam midsole'],
+    seed: 114,
+    summary: [
+      'Shoes are close to perfect drifters. They are dense enough to sit low, buoyant enough never to sink, and they survive years of sun and salt with their serial numbers legible. When four containers opened in a May storm, the ocean acquired sixty-one thousand identical, individually numbered, water-following markers.',
+      'They came ashore from Oregon to Vancouver Island within a year, and the finders did something the Registry still regards as the founding act of modern beachcombing science: they organised swap meets. Left shoes and right shoes travel at slightly different rates. Matching them by serial number turned a beach full of junk into a data set with pairs.',
+      'The file is marked DISPERSED. The population no longer moves as one thing. What remains is a slow, thin, decades-long rain of individual arrivals along the whole eastern rim of the Pacific.',
+    ],
+    notes: [
+      {
+        date: '1991-04-18',
+        text: 'Swap meet at Ocean Shores. Two hundred and forty pairs matched by serial. Left and right arrive up to five weeks apart, consistently, and always the same way round.',
+      },
+      {
+        date: '1993-02-09',
+        text: 'Second-lap arrivals beginning. Same consignment, three years out, one full circuit of the gyre.',
+      },
+      {
+        date: '1999-08-14',
+        text: 'Still arriving. Foam is intact. These will outlast everyone who catalogued them.',
+      },
+    ],
+    sightings: [
+      {
+        date: '1990-11-20',
+        lat: 46.9,
+        lon: -124.1,
+        place: 'Washington coast',
+        count: 'several hundred',
+        by: 'Public reports',
+      },
+      {
+        date: '1991-01-06',
+        lat: 49.4,
+        lon: -126.2,
+        place: 'Vancouver Island, west coast',
+        count: '~200',
+        by: 'Field station 3',
+      },
+      {
+        date: '1991-03-30',
+        lat: 42.05,
+        lon: -124.28,
+        place: 'Southern Oregon',
+        count: '77',
+        by: 'Volunteer log',
+      },
+      {
+        date: '1993-02-02',
+        lat: 19.7,
+        lon: -155.1,
+        place: 'Hawai‘i, windward shore',
+        count: '12',
+        by: 'Correspondent',
+        note: 'Second circuit. Serial block matches the 1990 release.',
+      },
+    ],
+  },
+
+  {
+    code: 'DR-1994-0022',
+    name: 'Deck Cargo, Hockey',
+    subtitle: 'Thirty-four thousand gloves, and the problem of padding',
+    class: 'I',
+    status: 'dispersed',
+    basis: 'documented',
+    drifter: 'glove',
+    ocean: 'Pacific',
+    release: {
+      date: '1994-12-05',
+      lat: 48.2,
+      lon: -161.3,
+      place: 'North Pacific, mid-basin',
+      vessel: 'Container vessel, eastbound',
+    },
+    quantity: '34,000 hockey gloves, plus chest protectors and shin pads',
+    materials: ['Leather', 'Nylon shell', 'Closed-cell padding'],
+    seed: 22,
+    summary: [
+      'Lost in almost the same water as the shoes four years earlier, and therefore the Registry’s cleanest natural experiment. Same release box, same season, different object.',
+      'A hockey glove traps air in its padding and sits noticeably higher than a shoe. That difference is small — a few centimetres of freeboard — and it is enough to change the destination. The gloves ran further north and arrived earlier. Some of them turned the corner into the Gulf of Alaska while the shoes were still crossing.',
+      'If you want the single sentence this Registry exists to prove: two objects can go into the sea in the same wave and come ashore on different coasts, and the reason is how much of them sticks up.',
+    ],
+    notes: [
+      {
+        date: '1995-09-01',
+        text: 'Gloves ahead of the shoe schedule by roughly four months at the same latitude. Freeboard is doing the work.',
+      },
+      {
+        date: '1996-05-20',
+        text: 'Nobody wants a single hockey glove. Recovery rate is poor. We ask finders to log and leave.',
+      },
+    ],
+    sightings: [
+      {
+        date: '1995-09-25',
+        lat: 55.34,
+        lon: -160.5,
+        place: 'Alaska Peninsula',
+        count: '31',
+        by: 'Field station 1',
+      },
+      {
+        date: '1996-02-14',
+        lat: 48.38,
+        lon: -124.72,
+        place: 'Strait of Juan de Fuca, outer shore',
+        count: '18',
+        by: 'Volunteer log',
+      },
+      {
+        date: '1997-11-03',
+        lat: 60.0,
+        lon: -145.7,
+        place: 'Prince William Sound',
+        count: '6',
+        by: 'Correspondent',
+      },
+    ],
+  },
+
+  {
+    code: 'DR-1997-0058',
+    name: 'Tokio Express, Container 62',
+    subtitle: 'Nearly five million pieces of moulded plastic, most of them nautical',
+    class: 'I',
+    status: 'in-transit',
+    basis: 'documented',
+    drifter: 'lego',
+    ocean: 'Atlantic',
+    release: {
+      date: '1997-02-13',
+      lat: 49.9,
+      lon: -6.3,
+      place: 'Approaches to Land’s End, Cornwall',
+      vessel: 'Tokio Express',
+    },
+    strand: 0.05,
+    quantity: '4,756,940 pieces across 62 containers, one of which went over',
+    materials: ['ABS', 'Polyethylene'],
+    seed: 58,
+    summary: [
+      'A wave described by the master as a once-in-a-hundred-year event rolled the ship sixty degrees and took sixty-two containers off the deck. One of them held a toy consignment: almost five million small moulded plastic pieces, itemised on a manifest that has since become the most consulted document in beachcombing.',
+      'The manifest is the reason this file matters. It is possible to state, exactly, how many of each shape entered the Atlantic. Three hundred and fifty-three thousand two hundred and sixty-four diving flippers. Ninety-seven thousand five hundred scuba tanks. Twenty-six thousand six hundred life preservers. Thirteen thousand dragons, in black and green.',
+      'They began coming ashore on Cornish beaches within weeks and have never stopped. Because each shape has a known count and a distinct buoyancy, every find is a measurement. The dragons in particular are so rare, and so wanted, that their arrivals are reported with the precision usually reserved for weather.',
+    ],
+    notes: [
+      {
+        date: '1997-03-09',
+        text: 'Flippers first, in enormous numbers, on the north Cornish beaches. They are flat and they sail.',
+      },
+      {
+        date: '2010-06-01',
+        text: 'Thirteen years. Still arriving on the same beaches with each big southwesterly. This is what a genuinely permanent material looks like.',
+      },
+      {
+        date: '2019-02-17',
+        text: 'Piece recovered on the Texas coast, mould consistent. If it is ours it has crossed and turned, which the model allows.',
+      },
+    ],
+    sightings: [
+      {
+        date: '1997-03-09',
+        lat: 50.53,
+        lon: -5.03,
+        place: 'Perranporth, Cornwall',
+        count: 'thousands',
+        by: 'Public reports',
+      },
+      {
+        date: '1998-08-21',
+        lat: 51.6,
+        lon: -10.1,
+        place: 'Southwest Ireland',
+        count: '~90',
+        by: 'Correspondent',
+      },
+      {
+        date: '2013-05-12',
+        lat: 39.45,
+        lon: -9.4,
+        place: 'Portuguese west coast',
+        count: '4',
+        by: 'Volunteer log',
+        note: 'Two flippers, one tank. Consistent with a southward pass on the Canary arm.',
+      },
+      {
+        date: '2019-02-17',
+        lat: 27.7,
+        lon: -97.2,
+        place: 'Padre Island, Texas',
+        count: '1',
+        by: 'Correspondent',
+        note: 'Filed as probable. A full westward crossing is within model tolerance.',
+      },
+    ],
+  },
+
+  {
+    code: 'DR-2011-0007',
+    name: 'The Sanriku Field',
+    subtitle: 'A coastline, withdrawn',
+    class: 'V',
+    status: 'dispersed',
+    basis: 'documented',
+    drifter: 'glove',
+    ocean: 'Pacific',
+    release: {
+      date: '2011-03-11',
+      lat: 38.6,
+      lon: 143.6,
+      place: 'Off the Sanriku coast, Honshū',
+    },
+    quantity: 'Estimated 1.5 million tonnes remaining afloat after the first month',
+    materials: ['Timber', 'Polystyrene', 'Fibreglass', 'Plastics', 'Fishing gear'],
+    seed: 7,
+    summary: [
+      'The Registry does not usually accept a whole coastline as an entry. This file is the exception, and it is kept in a deliberately plain hand.',
+      'What entered the water on 11 March 2011 was not cargo. It was buildings, boats, road furniture, aquaculture floats and the contents of houses, and a great deal of it floated. Within a month the field was already sorting itself by windage: the high-riding polystyrene and the aquaculture floats ran east fast, the timber lagged, and the low, waterlogged material dropped behind into a long tail more than a thousand kilometres deep.',
+      'Between 2012 and 2015 the leading edge arrived on the coasts of British Columbia, Washington, Oregon and Hawai‘i. The Registry’s role was to keep a numbered log and to hand identifiable objects, where possible, back to people who wanted them. That work is finished. The file remains open because the tail has not.',
+    ],
+    notes: [
+      {
+        date: '2011-04-06',
+        text: 'Field is already two populations. Floats and foam ahead, timber behind. The gap will grow.',
+      },
+      {
+        date: '2012-06-05',
+        text: 'Large fixed structure ashore on the Oregon coast. Separate file opened; see DR-2012-0044.',
+      },
+      {
+        date: '2015-10-01',
+        text: 'Arrivals now indistinguishable from ordinary North Pacific background. Field reclassified DISPERSED.',
+      },
+    ],
+    sightings: [
+      {
+        date: '2012-03-22',
+        lat: 48.4,
+        lon: -124.6,
+        place: 'Northwest Washington',
+        count: 'leading edge',
+        by: 'Field station 3',
+      },
+      {
+        date: '2012-09-14',
+        lat: 21.6,
+        lon: -158.1,
+        place: 'North shore, O‘ahu',
+        count: 'aquaculture floats',
+        by: 'Correspondent',
+      },
+      {
+        date: '2013-04-07',
+        lat: 52.9,
+        lon: -132.0,
+        place: 'Haida Gwaii',
+        count: 'sustained arrivals',
+        by: 'Field station 2',
+      },
+    ],
+  },
+
+  {
+    code: 'DR-2012-0044',
+    name: 'Misawa Dock No. 4',
+    subtitle: 'A hundred and eighty-eight tonnes of concrete, arriving on a schedule',
+    class: 'II',
+    status: 'recovered',
+    basis: 'documented',
+    drifter: 'float',
+    ocean: 'Pacific',
+    release: {
+      date: '2011-03-11',
+      lat: 40.9,
+      lon: 141.7,
+      place: 'Misawa, Aomori Prefecture',
+    },
+    quantity: '1 floating dock, 20 m × 6 m × 2 m, concrete over foam',
+    materials: ['Reinforced concrete', 'Expanded polystyrene core', 'Steel fixings'],
+    seed: 44,
+    summary: [
+      'A concrete-and-foam floating dock, torn from its moorings and carried out to sea. It weighed a hundred and eighty-eight tonnes. It sat high because its core was foam, which meant the wind had a grip on it, and it crossed the North Pacific in fifteen months.',
+      'It came ashore on a public beach on the Oregon coast in June 2012 with a builder’s plate still legible, and with roughly a hundred tonnes of living Japanese coastal organisms attached to its sides. That second cargo mattered more than the first. A single large object had carried an entire shore community across an ocean that should have been impassable to it.',
+      'The dock was scraped, sterilised and cut up. A section is retained. The file is closed, and it is the only file in the Registry where the closing note is not a relief.',
+    ],
+    notes: [
+      {
+        date: '2012-06-05',
+        text: 'Ashore, Agate Beach. Plate legible. Fifteen months, near enough, from release.',
+      },
+      {
+        date: '2012-06-08',
+        text: 'Biological survey ongoing. This is not a debris problem, it is a transport problem, and we were not the right office for it.',
+      },
+      {
+        date: '2012-08-02',
+        text: 'Demolition complete. Section retained, Ilwaco.',
+      },
+    ],
+    sightings: [
+      {
+        date: '2012-06-05',
+        lat: 44.66,
+        lon: -124.06,
+        place: 'Agate Beach, Oregon',
+        count: '1',
+        by: 'Public report, confirmed on site',
+        note: 'Builder’s plate identified the berth within 48 hours.',
+      },
+    ],
+  },
+
+  {
+    code: 'DR-2007-0129',
+    name: 'MSC Napoli, Branscombe Beach',
+    subtitle: 'The one where the beach came to the cargo',
+    class: 'I',
+    status: 'recovered',
+    basis: 'documented',
+    drifter: 'lego',
+    ocean: 'Atlantic',
+    release: {
+      date: '2007-01-18',
+      lat: 50.62,
+      lon: -3.2,
+      place: 'Lyme Bay, English Channel',
+      vessel: 'MSC Napoli',
+    },
+    strand: 0.9,
+    quantity: '~114 containers overboard; approximately 50 came ashore',
+    materials: ['Motorcycles', 'Wine casks', 'Nappies', 'Steering wheels', 'Perfume'],
+    seed: 129,
+    summary: [
+      'A cracked hull, a beached ship, and a hundred and fourteen containers in shallow water two miles from a shingle beach. Within a day the beach held motorcycles, oak wine casks, car parts and an extraordinary volume of nappies, and within two days it held several hundred people carrying them away.',
+      'The Registry’s interest is not the salvage. It is that this is the shortest-transit file in the collection. The drift lasted less than thirty hours. Everything the Registry normally infers over decades — where a thing goes, how fast, what the wind does to it — happened here in a single tide cycle and in full view.',
+      'It is kept on file as a control. When the model is asked to reproduce this event it must produce a landfall inside two days, in the right bay, or the model is wrong.',
+    ],
+    notes: [
+      {
+        date: '2007-01-20',
+        text: 'Landfall inside 30 hours. Model reproduces the bay. Keep this one as a control.',
+      },
+      {
+        date: '2007-01-22',
+        text: 'Receiver of Wreck notices posted. This file is legally unlike every other file we hold.',
+      },
+    ],
+    sightings: [
+      {
+        date: '2007-01-20',
+        lat: 50.686,
+        lon: -3.13,
+        place: 'Branscombe Beach, Devon',
+        count: '~50 containers, contents dispersed',
+        by: 'Public reports',
+      },
+    ],
+  },
+
+  {
+    code: 'DR-2021-0016',
+    name: 'X-Press Pearl Pellet Fallout',
+    subtitle: 'The smallest objects the Registry has ever tried to count',
+    class: 'I',
+    status: 'grounded',
+    basis: 'documented',
+    drifter: 'lego',
+    ocean: 'Indian',
+    release: {
+      date: '2021-05-25',
+      lat: 6.93,
+      lon: 79.72,
+      place: 'Off Colombo, Sri Lanka',
+      vessel: 'X-Press Pearl',
+    },
+    quantity: '~1,680 tonnes of pre-production plastic pellets',
+    materials: ['Polyethylene nurdles, 2–5 mm', 'Fused pellet clinker'],
+    seed: 16,
+    summary: [
+      'A container ship burned for twelve days and sank. Among what it released were roughly one thousand six hundred and eighty tonnes of nurdles — the lentil-sized pellets that all consumer plastic is made from — some of them fused by the fire into grey clinker that behaves like pumice.',
+      'A nurdle is the worst possible object for this Registry. It is too small to log individually, too numerous to count, too light to sink and too similar to a grain of sand to remove. Within days the pellets were eighty kilometres of shoreline deep on the western coast of Sri Lanka, in windrows you could take up by the handful.',
+      'The file is marked GROUNDED rather than RECOVERED because the material is ashore and will not be collected. It is now part of the beach. The modelled track shown here follows the fraction that stayed afloat and went south with the monsoon reversal.',
+    ],
+    notes: [
+      {
+        date: '2021-05-30',
+        text: 'Windrows on Negombo and Sarakkuwa. Depth of deposit measured in centimetres, not grains.',
+      },
+      {
+        date: '2021-08-11',
+        text: 'Fused clinker recovered 400 km south. It floats better than the raw pellet, which nobody expected.',
+      },
+      {
+        date: '2022-04-02',
+        text: 'Pellets reported on the Somali coast. Consistent with the model under the southwest monsoon.',
+      },
+    ],
+    sightings: [
+      {
+        date: '2021-05-28',
+        lat: 7.2,
+        lon: 79.83,
+        place: 'Negombo, western Sri Lanka',
+        count: 'continuous windrow',
+        by: 'Public reports',
+      },
+      {
+        date: '2021-08-11',
+        lat: 5.95,
+        lon: 80.45,
+        place: 'Southern Sri Lanka',
+        count: 'clinker fragments',
+        by: 'Correspondent',
+      },
+      {
+        date: '2022-04-02',
+        lat: 2.0,
+        lon: 45.4,
+        place: 'Somali coast',
+        count: 'scattered',
+        by: 'Correspondent',
+        note: 'Filed as probable. Composition consistent.',
+      },
+    ],
+  },
+
+  {
+    code: 'DR-1974-0001',
+    name: 'Vervoort Series A',
+    subtitle: 'The first entry. Four hundred bottles, and a school exercise book',
+    class: 'III',
+    status: 'lost-to-record',
+    basis: 'reconstructed',
+    drifter: 'bottle',
+    ocean: 'Pacific',
+    release: {
+      date: '1974-04-19',
+      lat: 46.15,
+      lon: -125.1,
+      place: 'Columbia River bar, outside the entrance',
+    },
+    strand: 0.006,
+    quantity: '400 bottles, numbered 001–400, each with a reply card',
+    materials: ['Glass', 'Cork and wax seal', 'Card', 'Ballast sand'],
+    seed: 1,
+    summary: [
+      'The Office of Pelagic Recovery exists because of a school exercise book. Between 1971 and 1974 a longshoreman on the Long Beach Peninsula wrote down the arrival date and the foreign label of every bottle that came ashore on one stretch of sand. By the time the book was full it contained eleven hundred entries and had accidentally described the northern arm of a gyre.',
+      'Series A was the first deliberate release: four hundred numbered bottles put over the side of a fishing boat outside the Columbia bar in April 1974, each carrying a reply card and a postal address. Sixty-eight cards came back. The first arrived from Vancouver Island in eleven weeks. The last arrived from the Marshall Islands in 1981.',
+      'Three hundred and thirty-two bottles were never heard from. They are still on the books. The Registry’s house position is that a file is not closed because it has gone quiet, and this is the file that established it.',
+    ],
+    notes: [
+      {
+        date: '1974-07-06',
+        text: 'Card 118 returned from Vancouver Island. Eleven weeks. The first proof that the exercise book was right.',
+      },
+      {
+        date: '1981-11-02',
+        text: 'Card 297, Marshall Islands, seven years out. Nobody expected the Series to reach the tropics at all.',
+      },
+      {
+        date: '1994-04-19',
+        text: 'Twenty years. 332 unaccounted. We will keep the numbers.',
+      },
+    ],
+    sightings: [
+      {
+        date: '1974-07-06',
+        lat: 49.05,
+        lon: -125.77,
+        place: 'Long Beach, Vancouver Island',
+        count: 'card 118',
+        by: 'Returned reply card',
+      },
+      {
+        date: '1975-02-28',
+        lat: 58.3,
+        lon: -134.4,
+        place: 'Southeast Alaska',
+        count: 'cards 044, 251',
+        by: 'Returned reply cards',
+      },
+      {
+        date: '1981-11-02',
+        lat: 7.1,
+        lon: 171.4,
+        place: 'Marshall Islands',
+        count: 'card 297',
+        by: 'Returned reply card',
+        note: 'Seven years, seven months. The longest return in the Series.',
+      },
+    ],
+  },
+
+  {
+    code: 'DR-1979-0088',
+    name: 'The Float Census',
+    subtitle: 'Hand-blown glass, a hundred years adrift',
+    class: 'II',
+    status: 'dormant',
+    basis: 'reconstructed',
+    drifter: 'float',
+    ocean: 'Pacific',
+    release: {
+      date: '1979-06-01',
+      lat: 41.0,
+      lon: 143.5,
+      place: 'Northwest Pacific fishing grounds (nominal position)',
+    },
+    strand: 0.003,
+    quantity: 'Population estimate only; tens of thousands remaining afloat',
+    materials: ['Hand-blown glass', 'Hemp and cotton netting'],
+    seed: 88,
+    summary: [
+      'For most of a century, Japanese fishing fleets used hollow glass spheres to hold nets at the surface. They were made in enormous numbers, in every size from a plum to a beach ball, and they were made to be lost. The green ones are common. The amethyst ones are not.',
+      'This file has no single release event. It is a census: an attempt to describe a population of objects that entered the Pacific continuously from roughly 1910 to roughly 1975, and which is still coming ashore. The nominal release position is a convenience for the model, not a claim.',
+      'The status is DORMANT because the population’s centre of mass has settled. Glass is heavier than plastic, sits deeper, and takes less wind, so floats drift more slowly and are pulled harder toward the middle of the gyre. Most of what is left is not on its way anywhere. It is turning very slowly in the middle of the North Pacific, and it has been doing so since before anyone alive was born.',
+    ],
+    notes: [
+      {
+        date: '1981-03-14',
+        text: 'Netting intact on three of nine recovered this season. Hemp does not last fifty years in seawater. These are recent losses, not old ones.',
+      },
+      {
+        date: '1998-01-22',
+        text: 'Amethyst float, 30 cm, Kodiak. Manganese in the glass turns violet under decades of ultraviolet. This one has been up top a long time.',
+      },
+      {
+        date: '2016-11-30',
+        text: 'Arrival rate down again. The supply is finite and it is closing.',
+      },
+    ],
+    sightings: [
+      {
+        date: '1981-03-14',
+        lat: 57.79,
+        lon: -152.4,
+        place: 'Kodiak Island, Alaska',
+        count: '9 this season',
+        by: 'Field station 1',
+      },
+      {
+        date: '1998-01-22',
+        lat: 57.79,
+        lon: -152.4,
+        place: 'Kodiak Island, Alaska',
+        count: '1 (amethyst, 30 cm)',
+        by: 'Field station 1',
+      },
+      {
+        date: '2016-11-30',
+        lat: 45.0,
+        lon: -124.0,
+        place: 'Central Oregon coast',
+        count: '2',
+        by: 'Volunteer log',
+      },
+    ],
+  },
+
+  {
+    code: 'DR-1998-0140',
+    name: 'The Grey Fleet',
+    subtitle: 'Forty thousand rubber sandals, sorted by the wind into left and right',
+    class: 'I',
+    status: 'dispersed',
+    basis: 'reconstructed',
+    drifter: 'shoe',
+    ocean: 'Pacific',
+    release: {
+      date: '1998-09-27',
+      lat: 33.0,
+      lon: -141.0,
+      place: 'Central North Pacific',
+      vessel: 'Unidentified; deck cargo shifted in heavy weather',
+    },
+    quantity: 'Approximately 40,000 moulded sandals',
+    materials: ['EVA foam', 'Rubber strap'],
+    seed: 140,
+    summary: [
+      'A file the Registry keeps mainly for one observation. Moulded foam sandals are asymmetric: a left and a right present slightly different profiles to the wind, and over a long enough drift that difference sorts them.',
+      'Arrivals on the Hawaiian windward shores between 2000 and 2004 ran close to three to one in favour of right-foot sandals. Arrivals on the North American coast over the same period ran the other way. The Registry regards this as the most elegant thing in its holdings: the ocean performed a mechanical sort on forty thousand objects, using nothing but the difference between a left shoe and a right one.',
+      'The release position is inferred from the arrival pattern rather than reported. This file is RECONSTRUCTED and should be read as such.',
+    ],
+    notes: [
+      {
+        date: '2001-02-11',
+        text: 'Hawai‘i log: 214 right, 71 left. That is not sampling error.',
+      },
+      {
+        date: '2003-06-19',
+        text: 'Oregon log for the same period runs the other way, 1:2.4. Two branches of the same gyre, sorted.',
+      },
+    ],
+    sightings: [
+      {
+        date: '2000-08-04',
+        lat: 20.7,
+        lon: -156.4,
+        place: 'Maui, windward',
+        count: '~90',
+        by: 'Correspondent',
+      },
+      {
+        date: '2001-02-11',
+        lat: 21.65,
+        lon: -157.92,
+        place: 'O‘ahu, north shore',
+        count: '285 (214 R / 71 L)',
+        by: 'Correspondent',
+      },
+      {
+        date: '2003-06-19',
+        lat: 44.6,
+        lon: -124.06,
+        place: 'Central Oregon coast',
+        count: '58 (17 R / 41 L)',
+        by: 'Volunteer log',
+      },
+    ],
+  },
+
+  {
+    code: 'DR-1959-0002',
+    name: 'Toy Boat “Ossian”',
+    subtitle: 'Launched by a child. Recovered by a stranger. Fifty-nine years.',
+    class: 'IV',
+    status: 'recovered',
+    basis: 'speculative',
+    drifter: 'card',
+    ocean: 'Atlantic',
+    release: {
+      date: '1959-05-17',
+      lat: 57.0,
+      lon: -7.6,
+      place: 'Sound of Barra, Outer Hebrides',
+    },
+    quantity: '1',
+    materials: ['Pine hull, 41 cm', 'Lead keel', 'Painted canvas sail', 'Brass nameplate'],
+    seed: 2,
+    summary: [
+      'A pine hull forty-one centimetres long, with a lead keel, a canvas sail and a brass plate on the deck reading OSSIAN and a house address. It was launched from a rock in the Sound of Barra on a Sunday in May 1959 by a nine-year-old who had been told, correctly, that the sea goes everywhere.',
+      'It was found in 2018 on a beach in Vesterålen, in northern Norway: sail gone, hull sound, the brass plate legible under a hundred grams of goose barnacles. The address was still a house. The person who launched it was sixty-eight.',
+      'The route is not remarkable. It is the ordinary one. Anything that leaves the Hebrides and stays afloat is picked up by the North Atlantic Drift, handed to the Norwegian Coastal Current and carried north along that coast — which is why Norwegian beaches have been receiving Scottish and Irish objects for as long as anyone has been looking. What is remarkable is only that this particular object survived the journey with its name still on it.',
+      'The Registry accepts that this file cannot be verified and has classified it SPECULATIVE. It is kept in the collection anyway, and it is kept at the front, because it states the Office’s entire position in one object: a thing put into the sea is not thrown away. It is posted.',
+    ],
+    notes: [
+      {
+        date: '2018-03-04',
+        text: 'Barnacle load consistent with long open-water residence, not with a short drift and a long burial. The boat was up top for most of it.',
+      },
+      {
+        date: '2018-03-19',
+        text: 'Brass survives. Paint does not. Everything we know about this object we know because someone chose the expensive material for the nameplate.',
+      },
+      {
+        date: '2018-06-30',
+        text: 'Returned to the launcher. Retained on file at their request as a loan, not a donation.',
+      },
+    ],
+    sightings: [
+      {
+        date: '2018-03-04',
+        lat: 69.05,
+        lon: 15.7,
+        place: 'Vesterålen, northern Norway',
+        count: '1',
+        by: 'Public report',
+        note: 'Fifty-eight years, nine months, sixteen days.',
+      },
+    ],
+  },
+
+  {
+    code: 'DR-2003-0055',
+    name: 'Drifter 33N-144W (“Wren”)',
+    subtitle: 'An instrument that stopped reporting but did not stop moving',
+    class: 'III',
+    status: 'lost-to-record',
+    basis: 'speculative',
+    drifter: 'float',
+    ocean: 'Pacific',
+    release: {
+      date: '2003-09-02',
+      lat: 33.5,
+      lon: -144.0,
+      place: 'North Pacific convergence zone',
+      vessel: 'Deployed from a research charter',
+    },
+    quantity: '1 surface drifter with drogue (drogue lost 2005)',
+    materials: ['GRP hull', 'Lithium pack', 'Holey-sock drogue (parted)'],
+    seed: 55,
+    summary: [
+      'A standard surface drifter, deployed to sit at fifteen metres and report a position twice a day. It did that for six hundred and forty days. Then the drogue parted, the hull came up, and the object stopped being an oceanographic instrument and started being a piece of debris.',
+      'It kept transmitting for another eleven months, and those eleven months are the most valuable data the Registry holds, because they record what happens to an object when it stops following the water and starts feeling the wind. Its track tightened. It stopped crossing the basin and started circling inside it.',
+      'The battery failed in August 2006. Everything after that date is a continuation of the last known state under the Registry’s own model — a guess with a good pedigree and nothing more.',
+      'For fifteen years the file was carried as DORMANT, on the assumption that a hull with no drogue would stay in the convergence zone indefinitely. The 2023 re-solve did not support that. Run forward with the current model, the ensemble leaves the gyre on its western arm and disperses into the tropical Pacific, and no member is still at sea today. The classification was changed to match. This is the only file in the Registry whose status has ever been altered by the model rather than by a person.',
+    ],
+    notes: [
+      {
+        date: '2005-06-08',
+        text: 'Drogue parted. Speed up, direction changed, track tightened inside a week. Textbook.',
+      },
+      {
+        date: '2006-08-14',
+        text: 'Last transmission. Position holding within a 300 km box for four months prior.',
+      },
+      {
+        date: '2011-01-01',
+        text: 'Reclassified DORMANT. It is in the middle and it is not leaving.',
+      },
+      {
+        date: '2023-11-06',
+        text: 'Re-solve contradicts the 2011 note. Under the present model it does leave, on the western arm, and it comes ashore. Reclassified LOST TO RECORD. The 2011 note stays on the file.',
+      },
+    ],
+    sightings: [
+      {
+        date: '2005-06-08',
+        lat: 36.4,
+        lon: -161.2,
+        place: 'Central North Pacific (transmitted)',
+        by: 'Telemetry',
+        note: 'Drogue loss event.',
+      },
+      {
+        date: '2006-08-14',
+        lat: 32.1,
+        lon: -143.7,
+        place: 'North Pacific convergence zone (transmitted)',
+        by: 'Telemetry',
+        note: 'Final position of record.',
+      },
+    ],
+  },
+
+  {
+    code: 'DR-1986-0021',
+    name: 'Ellis Bay Letter Drop',
+    subtitle: 'Two hundred letters from a lighthouse that was about to be automated',
+    class: 'III',
+    status: 'in-transit',
+    basis: 'speculative',
+    drifter: 'bottle',
+    ocean: 'Atlantic',
+    release: {
+      date: '1986-10-11',
+      lat: 49.4,
+      lon: -63.5,
+      place: 'Gulf of St Lawrence, off Anticosti',
+    },
+    quantity: '200 sealed bottles',
+    materials: ['Glass', 'Wax', 'Paper'],
+    seed: 21,
+    summary: [
+      'The last keeper of a light station on the Gulf of St Lawrence, informed that the station would be automated in the spring, spent a season writing two hundred letters and sealing them in bottles. The letters were not addressed. Each contained the same three sentences and the station’s coordinates.',
+      'Nineteen have come back. They arrived from Newfoundland, from the Faroes, from the west coast of Ireland, and one, in 2004, from a beach in northern Norway. The intervals are consistent with a slow exit through the Strait of Belle Isle followed by a long ride on the North Atlantic Drift.',
+      'A hundred and eighty-one bottles remain unaccounted for. The Registry lists this file as IN TRANSIT rather than LOST TO RECORD because glass in cold water is patient, and because the returns are still coming at a rate of roughly one every four years.',
+    ],
+    notes: [
+      {
+        date: '1988-05-30',
+        text: 'First return, southern Newfoundland. Nineteen months. Wax seal intact.',
+      },
+      {
+        date: '1997-08-12',
+        text: 'Faroes. Eleven years. Paper legible, ink gone at the edges.',
+      },
+      {
+        date: '2004-09-01',
+        text: 'Northern Norway. Eighteen years. That is the far end of the Drift and it is the furthest we expect to get.',
+      },
+    ],
+    sightings: [
+      {
+        date: '1988-05-30',
+        lat: 47.6,
+        lon: -53.9,
+        place: 'Avalon Peninsula, Newfoundland',
+        count: '2',
+        by: 'Returned letters',
+      },
+      {
+        date: '1997-08-12',
+        lat: 62.0,
+        lon: -6.8,
+        place: 'Faroe Islands',
+        count: '1',
+        by: 'Returned letter',
+      },
+      {
+        date: '2001-04-17',
+        lat: 53.4,
+        lon: -9.9,
+        place: 'Connemara, western Ireland',
+        count: '3',
+        by: 'Returned letters',
+      },
+      {
+        date: '2004-09-01',
+        lat: 69.7,
+        lon: 18.9,
+        place: 'Troms, northern Norway',
+        count: '1',
+        by: 'Returned letter',
+      },
+    ],
+  },
+
+  {
+    code: 'DR-2016-0301',
+    name: 'Field 27 — Orange Netting',
+    subtitle: 'Gear that kept working after everyone stopped watching',
+    class: 'V',
+    status: 'in-transit',
+    basis: 'speculative',
+    drifter: 'glove',
+    ocean: 'Pacific',
+    release: {
+      date: '2016-03-01',
+      lat: 30.0,
+      lon: -140.0,
+      place: 'North Pacific convergence zone (first survey position)',
+    },
+    strand: 0.02,
+    quantity: 'Aggregate mass at first survey: 11.4 tonnes',
+    materials: ['Polypropylene netting', 'Polyethylene float line', 'Accreted debris'],
+    seed: 301,
+    summary: [
+      'Not a loss event but an accumulation. Field 27 is a raft of derelict fishing gear that assembled itself in the North Pacific convergence zone out of net panels, float line and whatever else the same water was carrying. It was first surveyed in March 2016 at eleven and a half tonnes.',
+      'A gear raft is a different kind of object from everything else in this Registry, because it grows. Net traps net. The raft has a windage that changes as it accretes, which means its track is not a line but a widening cone of possibility, and the Registry’s model is honest about being less useful here than anywhere else.',
+      'It is also the only file in the collection that is still catching things. That is why it is kept under Class V rather than Class II, and it is why the field notes are written in a tone the rest of the archive does not use.',
+    ],
+    notes: [
+      {
+        date: '2016-03-01',
+        text: 'First survey. 11.4 t. Sixty per cent of the mass is net panel from at least four different fisheries.',
+      },
+      {
+        date: '2019-07-22',
+        text: 'Re-survey, 14.1 t, position 900 km southeast of first. Slower than modelled. It is dragging.',
+      },
+      {
+        date: '2023-05-09',
+        text: 'No contact since 2019. Model continued. Confidence low and falling.',
+      },
+    ],
+    sightings: [
+      {
+        date: '2016-03-01',
+        lat: 30.0,
+        lon: -140.0,
+        place: 'North Pacific convergence zone',
+        count: '11.4 t',
+        by: 'Survey vessel',
+      },
+      {
+        date: '2019-07-22',
+        lat: 26.4,
+        lon: -133.1,
+        place: 'North Pacific convergence zone',
+        count: '14.1 t',
+        by: 'Survey vessel',
+      },
+    ],
+  },
+
+  {
+    code: 'DR-1966-0004',
+    name: 'Cabin Door, MV Arnholm',
+    subtitle: 'The only thing that came back',
+    class: 'II',
+    status: 'lost-to-record',
+    basis: 'speculative',
+    drifter: 'card',
+    ocean: 'Atlantic',
+    release: {
+      date: '1966-02-08',
+      lat: 58.2,
+      lon: -12.4,
+      place: 'Rockall Trough, North Atlantic',
+      vessel: 'MV Arnholm',
+    },
+    quantity: '1 (of an unknown number of floating items)',
+    materials: ['Marine plywood', 'Painted steel fittings'],
+    seed: 4,
+    summary: [
+      'A coaster went missing between Aberdeen and Reykjavík in February 1966 with eleven aboard. No distress call was received and no wreck was located. Eleven weeks later a cabin door with the vessel’s name stencilled on the inner face came ashore on the Icelandic south coast.',
+      'The Registry holds the file because the door is a drift measurement: a known object, from a known vessel, with a known window of release and a known arrival. Worked backwards through the model, the door narrows the loss position to a patch of the Rockall Trough roughly ninety kilometres across.',
+      'The door itself was returned to the families in 1967 and its present location is not recorded. The status is LOST TO RECORD and refers, as it always does in this archive, to the object. The Registry has never pretended it refers to anything else.',
+    ],
+    notes: [
+      {
+        date: '1966-04-24',
+        text: 'Ashore, south coast of Iceland. Stencil legible. Eleven weeks.',
+      },
+      {
+        date: '1966-09-02',
+        text: 'Back-solution gives a release box of about 90 km. It is the best that can be done and it is not enough.',
+      },
+      {
+        date: '1967-05-11',
+        text: 'Door released to the families. No further entries.',
+      },
+    ],
+    sightings: [
+      {
+        date: '1966-04-24',
+        lat: 63.42,
+        lon: -19.1,
+        place: 'South coast of Iceland',
+        count: '1',
+        by: 'Public report',
+        note: 'Only item ever recovered from the vessel.',
+      },
+    ],
+  },
+];
+
+export const caseByCode = (code: string): CaseFile | undefined =>
+  CASES.find((c) => c.code === code);
