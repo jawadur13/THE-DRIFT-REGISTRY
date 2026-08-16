@@ -1,0 +1,484 @@
+---
+import Base from '../layouts/Base.astro';
+import { CASES } from '../data/cases.ts';
+import { TRACKS, SOLVED_ON, ENSEMBLE_MEMBERS } from '../data/generated/tracks.ts';
+import { GYRES, JETS, DRIFTERS } from '../lib/ocean.ts';
+import { fmtDate, STATUSES, CLASSES } from '../lib/registry.ts';
+import { LAND_MASK_W, LAND_MASK_H } from '../data/generated/landmask.ts';
+
+const residuals = Object.values(TRACKS)
+  .map((t) => t.skill)
+  .filter((n): n is number => n !== null)
+  .sort((a, b) => a - b);
+const medianResidual = residuals[Math.floor(residuals.length / 2)];
+const dissenting = CASES.filter((c) => TRACKS[c.code].dissent);
+
+const basisCounts = (['documented', 'reconstructed', 'speculative'] as const).map((b) => ({
+  b,
+  n: CASES.filter((c) => c.basis === b).length,
+}));
+---
+
+<Base
+  title="The Office"
+  description="What the Drift Registry is, how the model works, what is real and what is invented, and who built it."
+  nav="about"
+>
+  <section class="wrap section" style="padding-bottom:var(--sp-6)">
+    <div class="head">
+      <div class="head__meta">
+        <p class="label">The Office</p>
+        <p class="label">Ilwaco, Washington · est. 1974</p>
+      </div>
+      <h1 class="a__h">An archive for things that are still moving</h1>
+    </div>
+
+    <div class="grid-2">
+      <p class="lede">
+        Most archives hold objects. This one holds positions, and the objects are elsewhere.
+      </p>
+      <div class="prose">
+        <p>
+          The Office of Pelagic Recovery keeps case files on things that went into the sea and did
+          not stop. It records where each one entered the water, what it was made of, who has seen
+          it since, and where a surface-current model puts it today.
+        </p>
+        <p>
+          The Registry's working principle is that a file is not closed because it has gone quiet.
+          Three hundred and thirty-two of the four hundred bottles in the founding series were
+          never heard from again. They are still on the books, and they will stay there.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  {/* ------------------------------------------------------------- history */}
+  <section class="wrap section" style="padding-top:0">
+    <div class="head">
+      <p class="label">01 — Origin</p>
+      <h2>It started as a school exercise book</h2>
+    </div>
+
+    <div class="prose">
+      <p>
+        Between 1971 and 1974 a longshoreman working the Columbia River bar kept a record of every
+        bottle that came ashore on one stretch of the Long Beach Peninsula: the date, the state of
+        the glass, and whatever was legible on the label. By the time the book was full it held
+        eleven hundred entries.
+      </p>
+      <p>
+        Read in order, those entries describe the northern arm of the North Pacific Subtropical
+        Gyre — the seasonal rhythm of it, the lag after a hard winter, the way arrivals from one
+        direction stop for a year and then resume. Nobody set out to measure a current. Somebody
+        set out to be tidy about a beach.
+      </p>
+      <p>
+        The Office was founded in the spring of 1974 to keep the book going, and its first act was
+        <a href="/registry/DR-1974-0001">Series A</a>: four hundred numbered bottles put over the
+        side outside the bar, each with a reply card. Sixty-eight cards came back. The last of them
+        arrived from the Marshall Islands seven years later.
+      </p>
+    </div>
+  </section>
+
+  {/* -------------------------------------------------------------- method */}
+  <section class="wrap section" id="method" style="padding-top:0">
+    <div class="head">
+      <div class="head__meta">
+        <p class="label">02 — Method</p>
+        <p class="label">Last full re-solve {fmtDate(SOLVED_ON)}</p>
+      </div>
+      <h2>How a position is arrived at</h2>
+    </div>
+
+    <div class="prose">
+      <p>
+        Every present-day position on this site is computed, not written down. A single module
+        holds the model; it runs once at build time to solve the whole registry, and again in your
+        browser when you use the <a href="/drift">simulator</a>. The two agree because they are the
+        same code.
+      </p>
+    </div>
+
+    <ol class="method">
+      <li>
+        <span class="method__n num">01</span>
+        <div>
+          <h3>A kinematic surface field</h3>
+          <p>
+            {GYRES.length} closed rotations, {JETS.length} boundary currents including the Gulf
+            Stream, the Kuroshio and the Agulhas, four zonal bands, Ekman convergence toward each
+            gyre core, and a westward-propagating eddy field. The whole thing is analytic — there
+            is no reanalysis dataset behind it and none is claimed. Mean speed over the ocean
+            surface comes out at about 0.15 m/s, and the Gulf Stream core at about 1.7 m/s.
+          </p>
+        </div>
+      </li>
+      <li>
+        <span class="method__n num">02</span>
+        <div>
+          <h3>Windage, which is the whole point</h3>
+          <p>
+            An object takes on a share of the wind's push in proportion to how much of it stands
+            above the waterline. The Registry models {DRIFTERS.length} profiles, from a drift
+            bottle at {DRIFTERS[0].windage.toFixed(2)} to a drift card at{' '}
+            {DRIFTERS[DRIFTERS.length - 1].windage.toFixed(2)}. This is not a refinement. Two
+            objects released in the same wave with different windage finish on different
+            continents, and the {' '}
+            <a href="/registry/DR-1994-0022">shoes and the hockey gloves</a> are the proof.
+          </p>
+        </div>
+      </li>
+      <li>
+        <span class="method__n num">03</span>
+        <div>
+          <h3>Real coastlines</h3>
+          <p>
+            Land is Natural Earth at 1:50 million, rasterised at build time into a{' '}
+            {LAND_MASK_W}×{LAND_MASK_H} bitmask — half a degree, about 55 km. Objects that hit it
+            try to slide along the coast; failing that, they either strand or are lifted off on the
+            next tide. A single identified object strands readily. A population of twenty-eight
+            thousand keeps a reservoir offshore and goes on arriving for decades, which is what the
+            record actually shows.
+          </p>
+        </div>
+      </li>
+      <li>
+        <span class="method__n num">04</span>
+        <div>
+          <h3>Ensembles, not trajectories</h3>
+          <p>
+            Every file is solved {ENSEMBLE_MEMBERS} times from a release box a few tens of
+            kilometres across — which is about how precisely any of these positions is really
+            known. The chart draws all {ENSEMBLE_MEMBERS}. The heavy line is the member most
+            consistent with the sighting log; the faint ones are the other solutions, and where
+            they fan out across an ocean, that fan is the honest answer.
+          </p>
+        </div>
+      </li>
+      <li>
+        <span class="method__n num">05</span>
+        <div>
+          <h3>The model is scored, in public</h3>
+          <p>
+            Each reported find is compared against the ensemble and the miss distance is printed on
+            the file. Across the whole registry the median residual is about{' '}
+            <strong>{medianResidual.toLocaleString('en')} km</strong>, on drifts running to tens of
+            thousands. Some files are wrong by a great deal more, and those numbers are shown too.
+            A model whose errors are hidden is a decoration.
+          </p>
+        </div>
+      </li>
+      <li>
+        <span class="method__n num">06</span>
+        <div>
+          <h3>Where the model and the file disagree</h3>
+          <p>
+            {dissenting.length} of {CASES.length} files carry a status the ensemble does not
+            support. Those pages say so, at the top, in a box. The filed status stands, because the
+            archive is a record of what people concluded and a model is not a person.
+          </p>
+          <p class="method__list">
+            {
+              dissenting.map((c, i) => (
+                <>
+                  {i > 0 && <span aria-hidden="true"> · </span>}
+                  <a href={`/registry/${c.code}`}>{c.code}</a>
+                </>
+              ))
+            }
+          </p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  {/* ---------------------------------------------------------- vocabulary */}
+  <section class="wrap section" style="padding-top:0">
+    <div class="head">
+      <p class="label">03 — Controlled vocabulary</p>
+      <h2>Six statuses and five classes</h2>
+    </div>
+
+    <div class="vocab">
+      <div>
+        <p class="label" style="margin-bottom:var(--sp-3)">Status</p>
+        <dl class="dl">
+          {
+            STATUSES.map((s) => (
+              <div>
+                <dt>
+                  <span class={`pill pill--${s.token}`}>{s.label}</span>
+                </dt>
+                <dd>{s.gloss}</dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+
+      <div>
+        <p class="label" style="margin-bottom:var(--sp-3)">Class</p>
+        <dl class="dl">
+          {
+            CLASSES.map((c) => (
+              <div>
+                <dt>{c.id} — {c.label}</dt>
+                <dd>{c.gloss}</dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  {/* ---------------------------------------------------------- disclosure */}
+  <section class="wrap section" id="disclosure" style="padding-top:0">
+    <div class="head">
+      <p class="label">04 — Disclosure</p>
+      <h2>What is real here, and what is not</h2>
+    </div>
+
+    <div class="warn">
+      <p>
+        <strong>The Office of Pelagic Recovery does not exist.</strong> It has no premises, no
+        staff, no legal standing and no relationship with any real body. Ida Vervoort is invented.
+        The founding exercise book is invented. Every field note, sighting log entry and internal
+        memo on this site was written for it.
+      </p>
+    </div>
+
+    <div class="prose" style="margin-top:var(--sp-5)">
+      <p>Each case file carries one of three marks, and the mark is load-bearing:</p>
+    </div>
+
+    <dl class="dl basisdl">
+      <div>
+        <dt><span class="basis basis--documented">documented</span></dt>
+        <dd>
+          Built around a real, publicly recorded loss event — the 1990 shoe spill, the 1992 bath
+          toys, the Tokio Express containers, the Tōhoku debris field, the Misawa dock, the MSC
+          Napoli, the X-Press Pearl. The event is real. The Registry's involvement in it is not.
+          <span class="basisdl__n num">{basisCounts[0].n} files</span>
+        </dd>
+      </div>
+      <div>
+        <dt><span class="basis basis--reconstructed">reconstructed</span></dt>
+        <dd>
+          Assembled from the general shape of things that demonstrably happen — deliberate drift
+          releases, the long tail of Japanese glass floats — but not traceable to one recorded
+          incident. Positions are inferred.
+          <span class="basisdl__n num">{basisCounts[1].n} files</span>
+        </dd>
+      </div>
+      <div>
+        <dt><span class="basis basis--speculative">speculative</span></dt>
+        <dd>
+          Invented outright, including the toy boat, the letter drop and the cabin door. They obey
+          the same physics as everything else, which is the only sense in which they are true.
+          <span class="basisdl__n num">{basisCounts[2].n} files</span>
+        </dd>
+      </div>
+    </dl>
+
+    <div class="prose" style="margin-top:var(--sp-5)">
+      <p>
+        The oceanography is not fiction. Surface gyres, western boundary intensification, Ekman
+        convergence and windage are real and well described, and beachcombing genuinely was used to
+        calibrate drift models — the shoe and bath-toy spills are the standard examples. What is
+        invented is an institution to care about them.
+      </p>
+    </div>
+  </section>
+
+  {/* ------------------------------------------------------------ colophon */}
+  <section class="wrap section" id="colophon" style="padding-top:0">
+    <div class="head">
+      <p class="label">05 — Colophon</p>
+      <h2>How it was made</h2>
+    </div>
+
+    <dl class="dl colophon">
+      <div>
+        <dt>Build</dt>
+        <dd>Astro, static output. No UI framework and no client router.</dd>
+      </div>
+      <div>
+        <dt>Interactivity</dt>
+        <dd>Hand-written TypeScript modules, loaded per page. Canvas 2D for the drift field.</dd>
+      </div>
+      <div>
+        <dt>Model</dt>
+        <dd>
+          <code>src/lib/ocean.ts</code> — one module, run in Node at build time and in the browser
+          at runtime.
+        </dd>
+      </div>
+      <div>
+        <dt>Geography</dt>
+        <dd>
+          Natural Earth land polygons via <code>world-atlas</code>, public domain. Simplified to SVG
+          paths and rasterised to a land mask at build time; no runtime fetch.
+        </dd>
+      </div>
+      <div>
+        <dt>Projection</dt>
+        <dd>Plate carrée throughout, so every chart shares one coordinate system.</dd>
+      </div>
+      <div>
+        <dt>Typefaces</dt>
+        <dd>
+          Newsreader for display, Public Sans for interface, IBM Plex Mono for soundings and
+          registry codes. Self-hosted.
+        </dd>
+      </div>
+      <div>
+        <dt>Colour</dt>
+        <dd>
+          Two themes. <em>Chart</em> is paper and ink; <em>Night watch</em> is the same chart under
+          a lamp. Both are first-class and the toggle is in the masthead.
+        </dd>
+      </div>
+      <div>
+        <dt>Motion</dt>
+        <dd>
+          Slow by policy. Everything honours <code>prefers-reduced-motion</code>, including the
+          drift field, which drops its tracer count and stops animating in.
+        </dd>
+      </div>
+      <div>
+        <dt>Images</dt>
+        <dd>None. Every mark on this site is drawn from data or from type.</dd>
+      </div>
+    </dl>
+
+    <p class="prose" style="margin-top:var(--sp-6)">
+      Further reading, all real: Curtis Ebbesmeyer and Eric Scigliano, <em>Flotsametrics and the
+      Floating World</em>; the OSCURS surface-current model; Tracey Williams's long record of the
+      Tokio Express Lego on Cornish beaches; and the published literature on the North Pacific
+      Subtropical Convergence Zone.
+    </p>
+  </section>
+</Base>
+
+<style>
+  .a__h {
+    font-size: var(--step-5);
+    max-width: 20ch;
+    margin-bottom: var(--sp-5);
+  }
+
+  .method {
+    list-style: none;
+    padding: 0;
+    counter-reset: m;
+    border-top: 1px solid var(--ink);
+  }
+
+  .method li {
+    display: grid;
+    grid-template-columns: 3rem 1fr;
+    gap: var(--sp-3) var(--sp-4);
+    padding: var(--sp-5) 0;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+
+  .method__n {
+    font-size: var(--step--1);
+    color: var(--ink-3);
+    padding-top: 0.25rem;
+  }
+
+  .method h3 {
+    font-size: var(--step-1);
+    margin-bottom: var(--sp-2);
+  }
+
+  .method p {
+    color: var(--ink-2);
+    font-size: var(--step--1);
+    max-width: 62ch;
+  }
+
+  .method p + p {
+    margin-top: var(--sp-2);
+  }
+
+  .method__list {
+    font-family: var(--font-mono);
+    font-size: var(--step--2) !important;
+    letter-spacing: 0.06em;
+  }
+
+  @media (max-width: 40rem) {
+    .method li {
+      grid-template-columns: 1fr;
+      gap: var(--sp-2);
+    }
+  }
+
+  .vocab {
+    display: grid;
+    gap: var(--sp-6);
+  }
+
+  @media (min-width: 56rem) {
+    .vocab {
+      grid-template-columns: 1fr 1fr;
+      gap: var(--sp-7);
+    }
+  }
+
+  .vocab .dl > div {
+    grid-template-columns: minmax(9rem, 38%) 1fr;
+  }
+
+  .warn {
+    padding: var(--sp-5);
+    border: 1px solid var(--signal);
+    border-left-width: 3px;
+    border-radius: var(--radius);
+    background: color-mix(in srgb, var(--signal) 6%, transparent);
+    max-width: 62ch;
+  }
+
+  .warn p {
+    font-size: var(--step-0);
+    color: var(--ink);
+  }
+
+  .basisdl {
+    margin-top: var(--sp-4);
+    border-top: 1px solid var(--ink);
+  }
+
+  .basisdl > div {
+    grid-template-columns: minmax(9rem, 26%) 1fr;
+  }
+
+  .basisdl dd {
+    max-width: 62ch;
+  }
+
+  .basisdl__n {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: var(--step--2);
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .colophon {
+    border-top: 1px solid var(--ink);
+  }
+
+  .colophon code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--paper-2);
+    padding: 0.1em 0.3em;
+    border-radius: 2px;
+  }
+</style>
