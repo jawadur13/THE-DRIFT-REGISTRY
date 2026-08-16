@@ -1,0 +1,543 @@
+---
+import Base from '../layouts/Base.astro';
+import Chart from '../components/Chart.astro';
+import CaseCard from '../components/CaseCard.astro';
+import { CASES } from '../data/cases.ts';
+import { TRACKS, SOLVED_ON } from '../data/generated/tracks.ts';
+import { GYRES } from '../lib/ocean.ts';
+import { fmtDate, statusById, elapsed } from '../lib/registry.ts';
+import { cx, cy, WORLD } from '../lib/chart.ts';
+
+const featured = CASES.find((c) => c.featured) ?? CASES[0];
+const featuredTrack = TRACKS[featured.code];
+
+const shelf = ['DR-1997-0058', 'DR-1959-0002', 'DR-1966-0004', 'DR-2012-0044']
+  .map((code) => CASES.find((c) => c.code === code)!)
+  .filter(Boolean);
+
+const openFiles = CASES.filter((c) => c.status !== 'recovered').length;
+const totalKm = Object.values(TRACKS).reduce((a, t) => a + t.km, 0);
+const oldest = CASES.reduce((a, c) => (c.release.date < a.release.date ? c : a));
+const dissenting = CASES.filter((c) => TRACKS[c.code].dissent).length;
+
+// Every file's present modelled position, for the front-page chart.
+const marks = CASES.map((c) => ({
+  code: c.code,
+  name: c.name,
+  status: c.status,
+  token: statusById(c.status).token,
+  x: cx(TRACKS[c.code].now[0]),
+  y: cy(TRACKS[c.code].now[1]),
+}));
+---
+
+<Base
+  title="Nothing is lost. It is only in transit."
+  description="The Drift Registry keeps case files on objects lost at sea and models where each of them is now. A fictional hydrographic archive built on a real surface-current model."
+  nav="home"
+>
+  {/* ---------------------------------------------------------------- hero */}
+  <section class="hero">
+    <canvas id="hero-field" aria-hidden="true"></canvas>
+    <div class="hero__veil" aria-hidden="true"></div>
+
+    <div class="wrap-wide hero__in">
+      <p class="label hero__eyebrow">
+        Office of Pelagic Recovery &nbsp;·&nbsp; Ilwaco, Washington &nbsp;·&nbsp; Est. 1974
+      </p>
+
+      <h1 class="hero__h">
+        Nothing is lost.<br />
+        <em>It is only in transit.</em>
+      </h1>
+
+      <p class="hero__lede">
+        We keep files on things that fell into the sea and never stopped moving. Sixteen of them
+        are open. For each one we hold a release position, a last confirmed sighting, and a
+        solution for where it is today.
+      </p>
+
+      <div class="cluster hero__cta">
+        <a class="btn btn--solid" href="/registry">Open the registry</a>
+        <a class="btn" href="/drift">Release something</a>
+      </div>
+
+      <dl class="hero__stats">
+        <div>
+          <dt class="label">Files open</dt>
+          <dd class="num">{openFiles}</dd>
+        </div>
+        <div>
+          <dt class="label">Modelled distance</dt>
+          <dd class="num">{Math.round(totalKm / 1000).toLocaleString('en')}<span>&thinsp;000 km</span></dd>
+        </div>
+        <div>
+          <dt class="label">Oldest open file</dt>
+          <dd class="num">{oldest.release.date.slice(0, 4)}</dd>
+        </div>
+        <div>
+          <dt class="label">Last re-solve</dt>
+          <dd class="num">{fmtDate(SOLVED_ON)}</dd>
+        </div>
+      </dl>
+    </div>
+
+    <p class="hero__hint label" aria-hidden="true">Surface current, modelled — scroll</p>
+  </section>
+
+  {/* --------------------------------------------------------------- thesis */}
+  <section class="section wrap">
+    <div class="grid-2">
+      <div data-reveal>
+        <p class="label">01 — The premise</p>
+        <h2 class="thesis__h">
+          The ocean does not destroy things.<br />It circulates them.
+        </h2>
+      </div>
+      <div class="prose" data-reveal style="--delay:90ms">
+        <p>
+          A container of bath toys goes over the side of a ship south of the Aleutians in January
+          1992. Ten months later the toys begin arriving on beaches in southeast Alaska. Three
+          years after that they arrive again, further south, bleached white — because they have
+          gone all the way round.
+        </p>
+        <p>
+          A circuit of the North Pacific Subtropical Gyre takes about three years. That is a clock
+          made of water, and every object caught in it is a hand on the dial. Beachcombers worked
+          this out before oceanographers did, by writing down dates.
+        </p>
+        <p>
+          This Registry exists to keep writing them down. It holds the loss event, the finds, and a
+          model that connects them — and it prints how badly the model missed, every time.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  {/* ------------------------------------------------------------ world map */}
+  <section class="section wrap-wide" id="chart">
+    <div class="head" data-reveal>
+      <div class="head__meta">
+        <p class="label">02 — Present solution</p>
+        <p class="label">Plate carrée · solved {fmtDate(SOLVED_ON)}</p>
+      </div>
+      <h2>Every open file, where the model puts it today</h2>
+    </div>
+
+    <Chart frame={WORLD} label="World chart showing the modelled present position of every case file" class="worldchart">
+      {
+        CASES.map((c) => (
+          <path class="chart__track chart__track--ghost" d={TRACKS[c.code].pathLite} />
+        ))
+      }
+      {
+        marks.map((m) => (
+          <g class={`mark mark--${m.token}`}>
+            <circle cx={m.x} cy={m.y} r="3.4" class="mark__halo" />
+            <circle cx={m.x} cy={m.y} r="1.15" class="mark__dot" />
+            <title>{`${m.code} — ${m.name}`}</title>
+          </g>
+        ))
+      }
+    </Chart>
+
+    <p class="chartnote dim" data-reveal>
+      Faint lines are the modelled path of each file from its release to today. Dots are present
+      positions. {dissenting} of {CASES.length} files carry a status the model does not support;
+      those disagreements are printed on the file rather than resolved.
+    </p>
+  </section>
+
+  {/* --------------------------------------------------------- featured file */}
+  <section class="section wrap" id="featured">
+    <div class="head" data-reveal>
+      <div class="head__meta">
+        <p class="label">03 — File of record</p>
+        <p class="label code">{featured.code}</p>
+      </div>
+      <h2>{featured.name}</h2>
+    </div>
+
+    <div class="feature" data-reveal>
+      <div class="feature__text prose">
+        <p class="lede" style="margin-bottom:1.2rem">{featured.subtitle}</p>
+        <p>{featured.summary[0]}</p>
+        <p>{featured.summary[2]}</p>
+        <p style="margin-top:1.6rem">
+          <a class="btn" href={`/registry/${featured.code}`}>Open the file</a>
+        </p>
+      </div>
+
+      <dl class="dl feature__facts">
+        <div>
+          <dt>Released</dt>
+          <dd>{fmtDate(featured.release.date)}</dd>
+        </div>
+        <div>
+          <dt>Adrift</dt>
+          <dd>{elapsed(featured.release.date, SOLVED_ON)}</dd>
+        </div>
+        <div>
+          <dt>Windage</dt>
+          <dd>{featuredTrack.windage.toFixed(2)} — {featuredTrack.drifterLabel.toLowerCase()}</dd>
+        </div>
+        <div>
+          <dt>Modelled travel</dt>
+          <dd>{featuredTrack.km.toLocaleString('en')} km</dd>
+        </div>
+        <div>
+          <dt>Median residual</dt>
+          <dd>{featuredTrack.skill} km across {featured.sightings.length} finds</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  {/* ---------------------------------------------------------------- gyres */}
+  <section class="section wrap-wide">
+    <div class="head" data-reveal>
+      <div class="head__meta">
+        <p class="label">04 — The clocks</p>
+        <a class="label" href="/gyres" style="text-decoration:none">All seven circulations →</a>
+      </div>
+      <h2>Seven rotations, and how long each one takes</h2>
+    </div>
+
+    <ul class="gyres">
+      {
+        GYRES.map((g, i) => (
+          <li data-reveal style={`--delay:${i * 60}ms`}>
+            <span class="gyres__n num">{g.circuitYears.toFixed(1)}<span class="gyres__u">yr</span></span>
+            <span class="gyres__name">{g.name}</span>
+            <span class="gyres__spin label">
+              {g.spin === 1 ? '↻ clockwise' : '↺ anticlockwise'} · {g.ocean}
+            </span>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  {/* ----------------------------------------------------------- shelf */}
+  <section class="section wrap">
+    <div class="head" data-reveal>
+      <div class="head__meta">
+        <p class="label">05 — From the shelf</p>
+        <a class="label" href="/registry" style="text-decoration:none">All sixteen files →</a>
+      </div>
+      <h2>Four more, taken at random</h2>
+    </div>
+
+    <ul class="shelf">
+      {shelf.map((c, i) => <CaseCard case={c} track={TRACKS[c.code]} index={i} />)}
+    </ul>
+  </section>
+
+  {/* ------------------------------------------------------------- closing */}
+  <section class="section wrap closing">
+    <div data-reveal>
+      <p class="label">06 — If you find something</p>
+      <h2 class="closing__h">
+        The record is written by people walking on beaches.
+      </h2>
+      <p class="prose" style="margin-top:1.2rem">
+        Every useful thing this office knows, it learned from somebody who picked an object up,
+        noticed a serial number, and wrote down the date. If you find something with a mark on it,
+        the date and the position are worth more than the object.
+      </p>
+      <p style="margin-top:1.6rem">
+        <a class="btn btn--solid" href="/report">Report a find</a>
+      </p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* --- hero --------------------------------------------------------------- */
+  .hero {
+    position: relative;
+    min-height: min(94svh, 54rem);
+    display: grid;
+    /* minmax(0,1fr): without it the stats row's min-content width blows the
+       implicit column out past the viewport and the hero gets clipped. */
+    grid-template-columns: minmax(0, 1fr);
+    align-items: end;
+    padding-block: clamp(4rem, 14vh, 9rem) clamp(3rem, 8vh, 5rem);
+    border-bottom: 1px solid var(--rule);
+    overflow: hidden;
+  }
+
+  #hero-field {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+  }
+
+  .hero__veil {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      linear-gradient(
+        to right,
+        var(--paper) 0%,
+        color-mix(in srgb, var(--paper) 88%, transparent) 34%,
+        color-mix(in srgb, var(--paper) 20%, transparent) 66%,
+        color-mix(in srgb, var(--paper) 45%, transparent) 100%
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--paper) 70%, transparent) 0%,
+        transparent 26%,
+        transparent 62%,
+        color-mix(in srgb, var(--paper) 92%, transparent) 100%
+      );
+  }
+
+  .hero__in {
+    position: relative;
+    z-index: 2;
+  }
+
+  .hero__eyebrow {
+    margin-bottom: clamp(1.2rem, 4vh, 2.4rem);
+  }
+
+  .hero__h {
+    font-size: var(--step-6);
+    font-weight: 300;
+    line-height: 0.98;
+    letter-spacing: -0.032em;
+    max-width: 15ch;
+  }
+
+  .hero__h em {
+    font-style: italic;
+    color: var(--signal);
+  }
+
+  .hero__lede {
+    margin-top: clamp(1.2rem, 3vh, 2rem);
+    max-width: 46ch;
+    font-size: var(--step-1);
+    line-height: 1.5;
+    color: var(--ink-2);
+  }
+
+  .hero__cta {
+    margin-top: clamp(1.6rem, 4vh, 2.6rem);
+  }
+
+  .hero__stats {
+    margin-top: clamp(2.4rem, 7vh, 4rem);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(8rem, 100%), 1fr));
+    gap: var(--sp-4) var(--sp-6);
+    max-width: 52rem;
+    border-top: 1px solid var(--rule);
+    padding-top: var(--sp-4);
+  }
+
+  .hero__stats dd {
+    margin: 0;
+    font-size: var(--step-2);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .hero__stats dd span {
+    font-size: 0.5em;
+    color: var(--ink-3);
+    letter-spacing: 0.04em;
+  }
+
+  .hero__hint {
+    position: absolute;
+    right: var(--gutter);
+    bottom: 1.1rem;
+    z-index: 2;
+    writing-mode: vertical-rl;
+    letter-spacing: 0.2em;
+    opacity: 0.75;
+  }
+
+  @media (max-width: 60rem) {
+    .hero__hint {
+      display: none;
+    }
+  }
+
+  /* --- thesis ------------------------------------------------------------- */
+  .thesis__h {
+    margin-top: var(--sp-3);
+    font-size: var(--step-4);
+    line-height: 1.05;
+  }
+
+  /* --- world chart -------------------------------------------------------- */
+  .worldchart {
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent);
+  }
+
+  .mark__halo {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.4;
+    opacity: 0.55;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .mark__dot {
+    fill: currentColor;
+  }
+
+  .mark {
+    color: var(--ink-3);
+  }
+  .mark--transit {
+    color: var(--st-transit);
+  }
+  .mark--grounded {
+    color: var(--st-grounded);
+  }
+  .mark--recovered {
+    color: var(--st-recovered);
+  }
+  .mark--dispersed {
+    color: var(--st-dispersed);
+  }
+  .mark--dormant {
+    color: var(--st-dormant);
+  }
+  .mark--lost {
+    color: var(--st-lost);
+  }
+
+  .chartnote {
+    margin-top: var(--sp-4);
+    font-size: var(--step--1);
+    max-width: 62ch;
+  }
+
+  /* --- featured ----------------------------------------------------------- */
+  .feature {
+    display: grid;
+    gap: var(--sp-6);
+  }
+
+  @media (min-width: 58rem) {
+    .feature {
+      grid-template-columns: 1.35fr 1fr;
+      gap: var(--sp-7);
+      align-items: start;
+    }
+  }
+
+  .feature__facts {
+    border-top: 1px solid var(--ink);
+    padding-top: var(--sp-2);
+  }
+
+  /* --- gyres -------------------------------------------------------------- */
+  .gyres {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 0;
+    border-top: 1px solid var(--ink);
+  }
+
+  .gyres li {
+    display: grid;
+    grid-template-columns: 5.5rem 1fr;
+    gap: var(--sp-2) var(--sp-5);
+    align-items: baseline;
+    padding: var(--sp-4) 0;
+    border-bottom: 1px solid var(--rule-soft);
+    transition: padding-left 320ms var(--ease), background 320ms var(--ease);
+  }
+
+  .gyres li:hover {
+    padding-left: var(--sp-3);
+    background: color-mix(in srgb, var(--paper-2) 70%, transparent);
+  }
+
+  .gyres__n {
+    font-size: var(--step-2);
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    color: var(--track);
+  }
+
+  .gyres__u {
+    font-size: 0.48em;
+    color: var(--ink-3);
+    margin-left: 0.15em;
+    letter-spacing: 0.06em;
+  }
+
+  .gyres__name {
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+  }
+
+  .gyres__spin {
+    grid-column: 2;
+  }
+
+  @media (min-width: 48rem) {
+    .gyres li {
+      grid-template-columns: 5.5rem minmax(0, 26rem) 1fr;
+    }
+    .gyres__spin {
+      grid-column: 3;
+      text-align: right;
+    }
+  }
+
+  /* --- shelf -------------------------------------------------------------- */
+  .shelf {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 0;
+    border-top: 1px solid var(--ink);
+  }
+
+  /* --- closing ------------------------------------------------------------ */
+  .closing {
+    border-top: 1px solid var(--rule);
+  }
+
+  .closing__h {
+    margin-top: var(--sp-3);
+    font-size: var(--step-4);
+    max-width: 20ch;
+  }
+</style>
+
+<script>
+  import { DriftCanvas } from '../islands/drift-canvas.ts';
+  import { WORLD } from '../lib/chart.ts';
+
+  const cv = document.getElementById('hero-field') as HTMLCanvasElement | null;
+  if (cv) {
+    // A Pacific-centred crop: the ocean this archive is mostly about.
+    const field = new DriftCanvas({
+      canvas: cv,
+      frame: { lonFrom: -256, lonTo: 16, latFrom: -46, latTo: 68 },
+      mode: 'ambient',
+      density: 3000,
+    });
+    // Establish trails before the first paint so the hero is never an empty sea.
+    field.warm(140);
+    field.setSpeed(110);
+    field.start();
+  } else {
+    void WORLD;
+  }
+</script>
