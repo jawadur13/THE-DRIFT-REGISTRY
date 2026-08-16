@@ -1,0 +1,387 @@
+---
+import Base from '../../layouts/Base.astro';
+import CaseCard from '../../components/CaseCard.astro';
+import { CASES } from '../../data/cases.ts';
+import { TRACKS, SOLVED_ON } from '../../data/generated/tracks.ts';
+import { STATUSES, CLASSES, statusById, fmtDate } from '../../lib/registry.ts';
+
+const sorted = [...CASES].sort((a, b) => b.release.date.localeCompare(a.release.date));
+const oceans = [...new Set(CASES.map((c) => c.ocean))].sort();
+
+const counts = STATUSES.map((s) => ({
+  ...s,
+  n: CASES.filter((c) => c.status === s.id).length,
+}));
+---
+
+<Base
+  title="The Registry"
+  description="Sixteen open case files on objects lost at sea, each with a release position, a sighting log, and a modelled present position."
+  nav="registry"
+>
+  <section class="wrap section" style="padding-bottom:var(--sp-6)">
+    <div class="head">
+      <div class="head__meta">
+        <p class="label">The Registry</p>
+        <p class="label">Solved {fmtDate(SOLVED_ON)}</p>
+      </div>
+      <h1 class="reg__h">Sixteen open files</h1>
+    </div>
+
+    <p class="prose">
+      Every entry holds the same five things: where it went into the water, what it was made of,
+      who saw it afterwards, where the model puts it now, and how far the model was wrong the last
+      time anybody checked.
+    </p>
+
+    <ul class="tally" aria-label="Files by status">
+      {
+        counts.map((s) => (
+          <li>
+            <button
+              class="tally__btn"
+              type="button"
+              data-status-jump={s.id}
+              aria-label={`Show only files with status ${s.label}`}
+            >
+              <span class={`pill pill--${s.token}`}>{s.label}</span>
+              <span class="tally__n num">{s.n}</span>
+              <span class="tally__g">{s.gloss}</span>
+            </button>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="wrap" id="filters">
+    <form class="filters" id="reg-filters" role="search" aria-label="Filter case files">
+      <div class="field filters__search">
+        <label for="f-q">Search</label>
+        <input
+          id="f-q"
+          name="q"
+          type="search"
+          placeholder="name, code, material, place…"
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="field">
+        <label for="f-status">Status</label>
+        <select id="f-status" name="status">
+          <option value="">All statuses</option>
+          {STATUSES.map((s) => <option value={s.id}>{s.label}</option>)}
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="f-class">Class</label>
+        <select id="f-class" name="class">
+          <option value="">All classes</option>
+          {CLASSES.map((c) => <option value={c.id}>{`${c.id} — ${c.label}`}</option>)}
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="f-ocean">Basin</label>
+        <select id="f-ocean" name="ocean">
+          <option value="">All basins</option>
+          {oceans.map((o) => <option value={o}>{o}</option>)}
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="f-sort">Order</label>
+        <select id="f-sort" name="sort">
+          <option value="recent">Most recent release</option>
+          <option value="oldest">Oldest release</option>
+          <option value="code">Registry code</option>
+          <option value="distance">Distance travelled</option>
+          <option value="residual">Model agreement</option>
+        </select>
+      </div>
+
+      <button class="btn btn--ghost btn--sm filters__reset" type="button" id="f-reset">
+        Reset
+      </button>
+    </form>
+
+    <p class="resultline" role="status" aria-live="polite">
+      <span id="reg-count">{CASES.length}</span> of {CASES.length} files shown
+    </p>
+  </section>
+
+  <section class="wrap" style="padding-bottom:var(--sp-8)">
+    <ul class="shelf" id="reg-list">
+      {
+        sorted.map((c, i) => (
+          <CaseCard case={c} track={TRACKS[c.code]} index={i} />
+        ))
+      }
+    </ul>
+
+    <div class="empty" id="reg-empty" hidden>
+      <p class="label">No files match</p>
+      <p class="prose" style="margin-top:.6rem">
+        The Registry holds sixteen files and no more. Nothing here matches those terms — which,
+        in an archive this small, usually means the search is right and the collection is
+        incomplete.
+      </p>
+      <p style="margin-top:1rem">
+        <button class="btn btn--ghost btn--sm" type="button" id="f-reset-2">Clear the filters</button>
+      </p>
+    </div>
+  </section>
+
+  {/* Data the filter script needs, kept out of the DOM text. */}
+  <script
+    is:inline
+    type="application/json"
+    id="reg-data"
+    set:html={JSON.stringify(
+      CASES.map((c) => ({
+        code: c.code,
+        status: c.status,
+        cls: c.class,
+        ocean: c.ocean,
+        date: c.release.date,
+        km: TRACKS[c.code].km,
+        resid: TRACKS[c.code].skill ?? 999999,
+        hay: [
+          c.code,
+          c.name,
+          c.subtitle,
+          c.release.place,
+          c.release.vessel ?? '',
+          c.quantity,
+          c.materials.join(' '),
+          statusById(c.status).label,
+          c.basis,
+          c.ocean,
+          ...c.sightings.map((s) => s.place),
+        ]
+          .join(' ')
+          .toLowerCase(),
+      })),
+    )}
+  />
+</Base>
+
+<style>
+  .reg__h {
+    font-size: var(--step-5);
+    margin-bottom: var(--sp-5);
+  }
+
+  .tally {
+    list-style: none;
+    padding: 0;
+    margin-top: var(--sp-6);
+    display: grid;
+    gap: 0;
+    border-top: 1px solid var(--ink);
+  }
+
+  @media (min-width: 50rem) {
+    .tally {
+      grid-template-columns: repeat(2, 1fr);
+      column-gap: var(--sp-7);
+    }
+  }
+
+  .tally__btn {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(8.5rem, auto) 2.4rem 1fr;
+    gap: var(--sp-4);
+    align-items: baseline;
+    padding: 0.6rem 0;
+    border: 0;
+    border-bottom: 1px solid var(--rule-soft);
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    transition: padding-left 260ms var(--ease);
+  }
+
+  .tally__btn:hover {
+    padding-left: var(--sp-2);
+  }
+
+  .tally__n {
+    text-align: right;
+    font-size: var(--step-0);
+    color: var(--ink);
+  }
+
+  .tally__g {
+    font-size: var(--step--2);
+    color: var(--ink-3);
+  }
+
+  @media (max-width: 40rem) {
+    .tally__btn {
+      grid-template-columns: 1fr 2.4rem;
+    }
+    .tally__g {
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* --- filters ------------------------------------------------------------ */
+  .filters {
+    display: grid;
+    gap: var(--sp-4);
+    grid-template-columns: 1fr;
+    padding: var(--sp-5);
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    align-items: end;
+  }
+
+  @media (min-width: 46rem) {
+    .filters {
+      grid-template-columns: 1.6fr repeat(3, 1fr) 1.1fr auto;
+    }
+  }
+
+  .filters__search {
+    min-width: 0;
+  }
+
+  .filters__reset {
+    height: fit-content;
+  }
+
+  .resultline {
+    margin: var(--sp-4) 0 var(--sp-2);
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .shelf {
+    list-style: none;
+    padding: 0;
+    border-top: 1px solid var(--ink);
+  }
+
+  .empty {
+    padding: var(--sp-7) 0;
+    border-top: 1px solid var(--rule);
+  }
+</style>
+
+<script>
+  interface Row {
+    code: string;
+    status: string;
+    cls: string;
+    ocean: string;
+    date: string;
+    km: number;
+    resid: number;
+    hay: string;
+  }
+
+  const raw = document.getElementById('reg-data')?.textContent;
+  const rows: Row[] = raw ? JSON.parse(raw) : [];
+  const byCode = new Map(rows.map((r) => [r.code, r]));
+
+  const listEl = document.getElementById('reg-list') as HTMLUListElement | null;
+  const empty = document.getElementById('reg-empty');
+  const count = document.getElementById('reg-count');
+  const formEl = document.getElementById('reg-filters') as HTMLFormElement | null;
+  if (!listEl || !formEl) throw new Error('registry markup missing');
+  const list = listEl;
+  const form = formEl;
+
+  const items = Array.from(list.children) as HTMLElement[];
+  const q = document.getElementById('f-q') as HTMLInputElement;
+  const fStatus = document.getElementById('f-status') as HTMLSelectElement;
+  const fClass = document.getElementById('f-class') as HTMLSelectElement;
+  const fOcean = document.getElementById('f-ocean') as HTMLSelectElement;
+  const fSort = document.getElementById('f-sort') as HTMLSelectElement;
+
+  const comparators: Record<string, (a: Row, b: Row) => number> = {
+    recent: (a, b) => b.date.localeCompare(a.date),
+    oldest: (a, b) => a.date.localeCompare(b.date),
+    code: (a, b) => a.code.localeCompare(b.code),
+    distance: (a, b) => b.km - a.km,
+    residual: (a, b) => a.resid - b.resid,
+  };
+
+  function apply() {
+    const term = q.value.trim().toLowerCase();
+    const st = fStatus.value;
+    const cl = fClass.value;
+    const oc = fOcean.value;
+
+    let shown = 0;
+    for (const el of items) {
+      const row = byCode.get(el.dataset.code ?? '');
+      if (!row) continue;
+      const ok =
+        (!term || row.hay.includes(term)) &&
+        (!st || row.status === st) &&
+        (!cl || row.cls === cl) &&
+        (!oc || row.ocean === oc);
+      el.hidden = !ok;
+      if (ok) shown++;
+    }
+
+    const cmp = comparators[fSort.value] ?? comparators.recent;
+    const order = [...items].sort((a, b) => {
+      const ra = byCode.get(a.dataset.code ?? '');
+      const rb = byCode.get(b.dataset.code ?? '');
+      if (!ra || !rb) return 0;
+      return cmp(ra, rb);
+    });
+    order.forEach((el) => list.append(el));
+
+    if (count) count.textContent = String(shown);
+    if (empty) empty.hidden = shown > 0;
+    list.hidden = shown === 0;
+
+    // Keep the URL shareable without adding history entries per keystroke.
+    const params = new URLSearchParams();
+    if (term) params.set('q', term);
+    if (st) params.set('status', st);
+    if (cl) params.set('class', cl);
+    if (oc) params.set('ocean', oc);
+    if (fSort.value !== 'recent') params.set('sort', fSort.value);
+    const qs = params.toString();
+    history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+  }
+
+  function reset() {
+    form.reset();
+    apply();
+  }
+
+  form.addEventListener('input', apply);
+  form.addEventListener('submit', (e) => e.preventDefault());
+  document.getElementById('f-reset')?.addEventListener('click', reset);
+  document.getElementById('f-reset-2')?.addEventListener('click', reset);
+
+  document.querySelectorAll<HTMLButtonElement>('[data-status-jump]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      fStatus.value = btn.dataset.statusJump ?? '';
+      apply();
+      document.getElementById('filters')?.scrollIntoView({ block: 'start' });
+    });
+  });
+
+  // Restore state from the URL on load.
+  const p = new URLSearchParams(location.search);
+  if (p.get('q')) q.value = p.get('q')!;
+  if (p.get('status')) fStatus.value = p.get('status')!;
+  if (p.get('class')) fClass.value = p.get('class')!;
+  if (p.get('ocean')) fOcean.value = p.get('ocean')!;
+  if (p.get('sort')) fSort.value = p.get('sort')!;
+  apply();
+</script>
