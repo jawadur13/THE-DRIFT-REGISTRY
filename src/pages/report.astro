@@ -1,0 +1,577 @@
+---
+import Base from '../layouts/Base.astro';
+import { CASES } from '../data/cases.ts';
+
+const codes = [...CASES].sort((a, b) => a.code.localeCompare(b.code));
+---
+
+<Base
+  title="Report a Find"
+  description="The Registry is written by people walking on beaches. If you have found something with a mark on it, the date and the position are worth more than the object."
+  nav="report"
+>
+  <section class="wrap section" style="padding-bottom:var(--sp-5)">
+    <div class="head">
+      <div class="head__meta">
+        <p class="label">Form OPR-3</p>
+        <p class="label">Shore report</p>
+      </div>
+      <h1 class="rep__h">If you found something, tell us where.</h1>
+    </div>
+
+    <div class="grid-2">
+      <p class="lede">
+        The object matters less than the paperwork. Take the date. Take the position. Leave the
+        thing where it is if it is bigger than you.
+      </p>
+      <div class="prose">
+        <p>
+          Everything useful this office knows was learned from somebody who picked up a shoe,
+          noticed the serial number was legible, and wrote down what day it was. One find is an
+          anecdote. Four hundred finds with dates is a current chart.
+        </p>
+        <p>
+          Photograph any mark, stamp, mould number or manufacturer's code before you clean it.
+          Salt-etched plastic is legible for about a week after it comes out of the water and then
+          it isn't.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" style="padding-bottom:var(--sp-8)">
+    <div class="repwrap">
+      <form class="rep" id="rep-form" novalidate>
+        <fieldset>
+          <legend class="label">1 — The find</legend>
+
+          <div class="field" data-field>
+            <label for="r-what">What is it <span class="req">required</span></label>
+            <input
+              id="r-what"
+              name="what"
+              type="text"
+              required
+              maxlength="120"
+              placeholder="a shoe, a float, a fragment of moulded plastic…"
+              autocomplete="off"
+            />
+            <p class="field__err" data-err></p>
+          </div>
+
+          <div class="row">
+            <div class="field" data-field>
+              <label for="r-date">Date found <span class="req">required</span></label>
+              <input id="r-date" name="date" type="date" required />
+              <p class="field__err" data-err></p>
+            </div>
+
+            <div class="field">
+              <label for="r-count">How many</label>
+              <input id="r-count" name="count" type="number" min="1" max="100000" value="1" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="r-marks">Marks, stamps, serials</label>
+            <input
+              id="r-marks"
+              name="marks"
+              type="text"
+              maxlength="160"
+              placeholder="anything moulded, printed or stamped into it"
+              autocomplete="off"
+            />
+            <p class="field__hint">Transcribe exactly, including characters you cannot read as ?.</p>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend class="label">2 — Where</legend>
+
+          <div class="field" data-field>
+            <label for="r-place">Beach or shoreline <span class="req">required</span></label>
+            <input
+              id="r-place"
+              name="place"
+              type="text"
+              required
+              maxlength="140"
+              placeholder="nearest named place, and which end of it"
+              autocomplete="off"
+            />
+            <p class="field__err" data-err></p>
+          </div>
+
+          <div class="row">
+            <div class="field" data-field>
+              <label for="r-lat">Latitude</label>
+              <input
+                id="r-lat"
+                name="lat"
+                type="number"
+                step="0.0001"
+                min="-90"
+                max="90"
+                placeholder="57.0512"
+                inputmode="decimal"
+              />
+              <p class="field__err" data-err></p>
+            </div>
+
+            <div class="field" data-field>
+              <label for="r-lon">Longitude</label>
+              <input
+                id="r-lon"
+                name="lon"
+                type="number"
+                step="0.0001"
+                min="-180"
+                max="180"
+                placeholder="-135.3300"
+                inputmode="decimal"
+              />
+              <p class="field__err" data-err></p>
+            </div>
+          </div>
+
+          <p class="field__hint">
+            Decimal degrees, south and west negative. If you only have a place name that is fine —
+            we would rather have the name than a guess.
+          </p>
+        </fieldset>
+
+        <fieldset>
+          <legend class="label">3 — Condition and context</legend>
+
+          <div class="row">
+            <div class="field">
+              <label for="r-cond">Condition</label>
+              <select id="r-cond" name="condition">
+                <option value="">Not assessed</option>
+                <option>As new — no fouling, pigment intact</option>
+                <option>Light fouling, pigment fading</option>
+                <option>Heavy fouling, goose barnacles present</option>
+                <option>Bleached white, surface chalky</option>
+                <option>Fragmented, embrittled</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="r-file">Possible file</label>
+              <select id="r-file" name="file">
+                <option value="">Unknown / new</option>
+                {codes.map((c) => <option value={c.code}>{`${c.code} — ${c.name}`}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="r-notes">Anything else</label>
+            <textarea
+              id="r-notes"
+              name="notes"
+              maxlength="1200"
+              placeholder="wind and weather in the days before, tide state, whether there was more of it further along the beach…"
+            ></textarea>
+            <p class="field__hint"><span id="r-chars">0</span> / 1200</p>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend class="label">4 — You</legend>
+
+          <div class="row">
+            <div class="field" data-field>
+              <label for="r-name">Name <span class="req">required</span></label>
+              <input id="r-name" name="name" type="text" required maxlength="80" autocomplete="name" />
+              <p class="field__err" data-err></p>
+            </div>
+
+            <div class="field" data-field>
+              <label for="r-email">Email <span class="req">required</span></label>
+              <input id="r-email" name="email" type="email" required maxlength="120" autocomplete="email" />
+              <p class="field__err" data-err></p>
+            </div>
+          </div>
+
+          <label class="check">
+            <input type="checkbox" id="r-leave" name="leave" />
+            <span>
+              <strong>I left the object where it was.</strong>
+              <span class="check__note">
+                The right answer for anything larger than a hand, anything with growth on it, and
+                anything that looks like it was part of a vessel.
+              </span>
+            </span>
+          </label>
+        </fieldset>
+
+        <div class="repfoot">
+          <button class="btn btn--solid" type="submit">Lodge the report</button>
+          <p class="repfoot__note dim">
+            This form does not transmit anything. There is no server, no endpoint and no database
+            — the Office is a fiction. Your entry is validated, given a reference, and then it
+            exists only in your browser.
+          </p>
+        </div>
+      </form>
+
+      <output class="receipt" id="rep-receipt" hidden>
+        <p class="label">Report lodged</p>
+        <p class="receipt__ref code" id="rc-ref"></p>
+        <hr class="rule-soft" />
+        <dl class="dl">
+          <div><dt>Object</dt><dd id="rc-what"></dd></div>
+          <div><dt>Found</dt><dd id="rc-date"></dd></div>
+          <div><dt>Shoreline</dt><dd id="rc-place"></dd></div>
+          <div><dt>Position</dt><dd id="rc-pos"></dd></div>
+          <div><dt>Filed against</dt><dd id="rc-file"></dd></div>
+          <div><dt>Reported by</dt><dd id="rc-by"></dd></div>
+        </dl>
+        <p class="receipt__msg">
+          Entered in the day book. In a real archive this would sit unread for between three weeks
+          and eleven years, and then somebody would notice it matched something.
+        </p>
+        <p class="receipt__msg dim">
+          Nothing was sent anywhere. Reload the page to start again.
+        </p>
+        <button class="btn btn--ghost btn--sm" type="button" id="rc-again">File another</button>
+      </output>
+
+      <aside class="side">
+        <p class="label">What makes a report useful</p>
+        <ol class="tips">
+          <li><span class="num">01</span> The date. Not "last spring". The date.</li>
+          <li><span class="num">02</span> A position, even a rough one. A beach name beats nothing.</li>
+          <li><span class="num">03</span> Any moulded or stamped mark, transcribed before cleaning.</li>
+          <li><span class="num">04</span> Fouling. Goose barnacles mean open water, not a local loss.</li>
+          <li><span class="num">05</span> Whether there was more of it further along the strand line.</li>
+          <li><span class="num">06</span> A photograph with something for scale.</li>
+        </ol>
+
+        <p class="label" style="margin-top:var(--sp-6)">Please do not</p>
+        <ul class="donts">
+          <li>Move anything large, structural or growing.</li>
+          <li>Clean a mark off before reading it.</li>
+          <li>Report a find you did not personally see.</li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .rep__h {
+    font-size: var(--step-5);
+    max-width: 18ch;
+    margin-bottom: var(--sp-5);
+  }
+
+  .repwrap {
+    display: grid;
+    gap: var(--sp-7);
+    border-top: 1px solid var(--ink);
+    padding-top: var(--sp-6);
+  }
+
+  @media (min-width: 62rem) {
+    .repwrap {
+      grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+      gap: var(--sp-8);
+      align-items: start;
+    }
+  }
+
+  .rep {
+    display: grid;
+    gap: var(--sp-6);
+    min-width: 0;
+  }
+
+  fieldset {
+    border: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--sp-4);
+  }
+
+  legend {
+    padding: 0 0 var(--sp-3);
+    border-bottom: 1px solid var(--rule);
+    width: 100%;
+    margin-bottom: var(--sp-2);
+  }
+
+  .row {
+    display: grid;
+    gap: var(--sp-4);
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 34rem) {
+    .row {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .req {
+    color: var(--signal);
+    letter-spacing: 0.11em;
+    font-size: 0.85em;
+    margin-left: 0.4rem;
+  }
+
+  .check {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--sp-3);
+    align-items: start;
+    font-size: var(--step--1);
+    cursor: pointer;
+    padding: var(--sp-3);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    transition: border-color 200ms var(--ease);
+  }
+
+  .check:hover {
+    border-color: var(--ink-3);
+  }
+
+  .check input {
+    accent-color: var(--signal);
+    margin-top: 0.25rem;
+  }
+
+  .check__note {
+    display: block;
+    font-size: var(--step--2);
+    color: var(--ink-3);
+    margin-top: 0.2rem;
+    line-height: 1.45;
+  }
+
+  .repfoot {
+    display: grid;
+    gap: var(--sp-3);
+    padding-top: var(--sp-4);
+    border-top: 1px solid var(--rule);
+  }
+
+  .repfoot .btn {
+    justify-self: start;
+  }
+
+  .repfoot__note {
+    font-size: var(--step--2);
+    max-width: 54ch;
+    line-height: 1.5;
+  }
+
+  /* --- receipt ------------------------------------------------------------ */
+  .receipt {
+    display: grid;
+    gap: var(--sp-4);
+    padding: var(--sp-6);
+    border: 1px solid var(--ink);
+    border-left-width: 3px;
+    border-left-color: var(--good);
+    border-radius: var(--radius);
+    background: var(--paper-2);
+    animation: lodge 520ms var(--ease) both;
+  }
+
+  @keyframes lodge {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
+
+  .receipt__ref {
+    font-size: var(--step-3);
+    letter-spacing: 0.06em;
+    color: var(--good);
+  }
+
+  .receipt__msg {
+    font-size: var(--step--1);
+    color: var(--ink-2);
+    max-width: 52ch;
+  }
+
+  .receipt .btn {
+    justify-self: start;
+  }
+
+  /* --- side --------------------------------------------------------------- */
+  .side {
+    position: sticky;
+    top: 5rem;
+    padding: var(--sp-5);
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+  }
+
+  @media (max-width: 62rem) {
+    .side {
+      position: static;
+    }
+  }
+
+  .tips,
+  .donts {
+    list-style: none;
+    padding: 0;
+    margin-top: var(--sp-3);
+    display: grid;
+    gap: var(--sp-3);
+    font-size: var(--step--1);
+    color: var(--ink-2);
+  }
+
+  .tips li {
+    display: grid;
+    grid-template-columns: 1.8rem 1fr;
+    gap: var(--sp-2);
+  }
+
+  .tips .num {
+    color: var(--ink-3);
+    font-size: var(--step--2);
+  }
+
+  .donts li {
+    padding-left: 1.1rem;
+    position: relative;
+  }
+
+  .donts li::before {
+    content: '×';
+    position: absolute;
+    left: 0;
+    color: var(--signal);
+  }
+</style>
+
+<script>
+  const form = document.getElementById('rep-form') as HTMLFormElement | null;
+  const receipt = document.getElementById('rep-receipt') as HTMLElement | null;
+  if (!form || !receipt) throw new Error('report markup missing');
+
+  const notes = document.getElementById('r-notes') as HTMLTextAreaElement;
+  const chars = document.getElementById('r-chars')!;
+  notes.addEventListener('input', () => {
+    chars.textContent = String(notes.value.length);
+  });
+
+  const wrapOf = (el: HTMLElement) => el.closest<HTMLElement>('[data-field]');
+
+  function setError(el: HTMLElement, msg: string) {
+    const w = wrapOf(el);
+    if (!w) return;
+    w.dataset.invalid = msg ? 'true' : 'false';
+    const p = w.querySelector<HTMLElement>('[data-err]');
+    if (p) p.textContent = msg;
+    el.setAttribute('aria-invalid', msg ? 'true' : 'false');
+  }
+
+  /** Returns an error message, or '' when the field is acceptable. */
+  function validate(el: HTMLInputElement): string {
+    const v = el.value.trim();
+    if (el.required && !v) return 'This one is required.';
+    if (el.type === 'email' && v && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v))
+      return 'That does not look like an address.';
+    if (el.id === 'r-date' && v) {
+      const d = Date.parse(v + 'T00:00:00Z');
+      if (Number.isNaN(d)) return 'Use the date picker.';
+      if (d > Date.now()) return 'The Registry cannot accept a future find.';
+      if (d < Date.parse('1900-01-01T00:00:00Z')) return 'Earlier than the Registry can hold.';
+    }
+    if (el.id === 'r-lat' && v && (Number(v) < -90 || Number(v) > 90))
+      return 'Latitude runs −90 to 90.';
+    if (el.id === 'r-lon' && v && (Number(v) < -180 || Number(v) > 180))
+      return 'Longitude runs −180 to 180.';
+    return '';
+  }
+
+  const watched = Array.from(
+    form.querySelectorAll<HTMLInputElement>('[data-field] input'),
+  );
+
+  watched.forEach((el) => {
+    el.addEventListener('blur', () => setError(el, validate(el)));
+    el.addEventListener('input', () => {
+      if (wrapOf(el)?.dataset.invalid === 'true') setError(el, validate(el));
+    });
+  });
+
+  /** OPR-YYYY-XXXX, derived from the entry so the same report gets the same ref. */
+  function reference(seed: string): string {
+    let h = 2166136261;
+    for (let i = 0; i < seed.length; i++) {
+      h ^= seed.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    const n = (h >>> 0) % 10000;
+    return `OPR-${new Date().getUTCFullYear()}-${String(n).padStart(4, '0')}`;
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    let firstBad: HTMLInputElement | null = null;
+    for (const el of watched) {
+      const msg = validate(el);
+      setError(el, msg);
+      if (msg && !firstBad) firstBad = el;
+    }
+    if (firstBad) {
+      firstBad.focus();
+      firstBad.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      return;
+    }
+
+    const data = new FormData(form);
+    const get = (k: string) => String(data.get(k) ?? '').trim();
+
+    const lat = get('lat');
+    const lon = get('lon');
+    const pos =
+      lat && lon
+        ? `${Math.abs(+lat).toFixed(3)}°${+lat >= 0 ? 'N' : 'S'} ${Math.abs(+lon).toFixed(3)}°${
+            +lon >= 0 ? 'E' : 'W'
+          }`
+        : 'Not given — position to be inferred from the place name';
+
+    const set = (id: string, v: string) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = v;
+    };
+
+    set('rc-ref', reference(get('what') + get('date') + get('place') + get('email')));
+    set('rc-what', `${get('count') || '1'} × ${get('what')}${get('marks') ? ` — marked ${get('marks')}` : ''}`);
+    set('rc-date', new Date(get('date') + 'T00:00:00Z').toUTCString().slice(5, 16));
+    set('rc-place', get('place'));
+    set('rc-pos', pos);
+    set('rc-file', get('file') || 'Unassigned — held for review');
+    set('rc-by', `${get('name')} · ${get('email')}`);
+
+    form.hidden = true;
+    receipt.hidden = false;
+    receipt.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    (receipt.querySelector('button') as HTMLButtonElement | null)?.focus();
+  });
+
+  document.getElementById('rc-again')?.addEventListener('click', () => {
+    form.reset();
+    watched.forEach((el) => setError(el, ''));
+    chars.textContent = '0';
+    receipt.hidden = true;
+    form.hidden = false;
+    form.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    (document.getElementById('r-what') as HTMLInputElement | null)?.focus();
+  });
+</script>
